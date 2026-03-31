@@ -35,7 +35,6 @@ function App() {
           !isAuthenticated ? <RegisterPage /> : <Navigate to="/" />
         } 
       />
-
       <Route 
         path="/" 
         element={
@@ -49,7 +48,6 @@ function App() {
           )
         } 
       />
-
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

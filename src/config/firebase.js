@@ -1,6 +1,8 @@
+// Import the functions you need from the SDKs
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -10,62 +12,73 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+console.log('Firebase Config Loaded:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasAuthDomain: !!firebaseConfig.authDomain,
+  hasProjectId: !!firebaseConfig.projectId,
+});
 
-// Add scopes if needed
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
+// Initialize Firebase
+let app;
+let auth;
+let googleProvider;
 
-// Google sign-in with popup (with fallback to redirect)
-export const signInWithGoogle = async () => {
-  try {
-    // Try popup first
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    return {
-      success: true,
-      user: {
-        uid: user.uid,
-        email: user.email,
-        fullName: user.displayName,
-        photoURL: user.photoURL,
-      }
-    };
-  } catch (error) {
-    console.error('Google sign-in error:', error);
-    
-    // If popup is blocked, try redirect method
-    if (error.code === 'auth/popup-blocked') {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        // After redirect, user will come back to the app
-        return {
-          success: false,
-          redirect: true,
-          message: 'Redirecting to Google sign-in...'
-        };
-      } catch (redirectError) {
-        console.error('Redirect sign-in error:', redirectError);
-        return {
-          success: false,
-          error: 'Please allow popups for this site to sign in with Google, or try using email sign-in instead.'
-        };
-      }
-    }
-    
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+  googleProvider.addScope('email');
+  googleProvider.addScope('profile');
+  googleProvider.setCustomParameters({
+    prompt: 'select_account'
+  });
+  console.log('Firebase initialized successfully');
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+}
+
+// Google sign-in with redirect only (no popup)
+export const signInWithGoogleRedirect = async () => {
+  console.log('signInWithGoogleRedirect called');
+  
+  if (!auth || !googleProvider) {
+    console.error('Firebase not initialized properly');
     return {
       success: false,
-      error: error.message || 'Google sign-in failed. Please try email sign-in instead.'
+      error: 'Firebase configuration error. Please check your environment variables.'
+    };
+  }
+  
+  try {
+    await signInWithRedirect(auth, googleProvider);
+    console.log('Redirect initiated');
+    return {
+      success: false,
+      redirect: true,
+      message: 'Redirecting to Google sign-in...'
+    };
+  } catch (error) {
+    console.error('Redirect sign-in error:', error);
+    return {
+      success: false,
+      error: error.message || 'Unable to sign in with Google. Please try email sign-in instead.'
     };
   }
 };
 
+// Handle redirect result (call this on app load)
 export const handleRedirectResult = async () => {
+  console.log('Checking for redirect result...');
+  
+  if (!auth) {
+    console.error('Firebase auth not initialized');
+    return { success: false, error: 'Firebase not initialized' };
+  }
+  
   try {
     const result = await getRedirectResult(auth);
     if (result) {
+      console.log('Redirect result found:', result.user.email);
       const user = result.user;
       return {
         success: true,
@@ -77,6 +90,7 @@ export const handleRedirectResult = async () => {
         }
       };
     }
+    console.log('No redirect result found');
     return { success: false, noResult: true };
   } catch (error) {
     console.error('Redirect result error:', error);
@@ -87,9 +101,12 @@ export const handleRedirectResult = async () => {
   }
 };
 
+// Sign out from Firebase
 export const signOutGoogle = async () => {
   try {
-    await signOut(auth);
+    if (auth) {
+      await signOut(auth);
+    }
     return { success: true };
   } catch (error) {
     console.error('Google sign-out error:', error);

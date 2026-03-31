@@ -18,7 +18,7 @@ const RegisterPage = () => {
     businessPhone: '',
     address: '',
     location: {
-      coordinates: [36.8219, -1.2921] 
+      coordinates: [36.8219, -1.2921] // Default Nairobi coordinates
     },
     services: []
   });
@@ -184,7 +184,7 @@ const RegisterPage = () => {
                 name="email"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="johndoe@gmail.com"
+                placeholder="john@example.com"
                 value={formData.email}
                 onChange={handleChange}
               />

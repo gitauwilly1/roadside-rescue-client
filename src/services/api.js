@@ -90,7 +90,7 @@ export const garage = {
   toggleOnlineStatus: (isOnline) => api.patch('/garage/online-status', { isOnline }),
   
   // Services
-  getServices: () => api.get('/garage/profile'), // services are in profile
+  getServices: () => api.get('/garage/profile'),
   updateServices: (services) => api.put('/garage/services', { services }),
   addService: (data) => api.post('/garage/services', data),
   deleteService: (serviceType) => api.delete(`/garage/services/${serviceType}`),

@@ -11,12 +11,13 @@ const ClientDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
+  // Job request form state
   const [jobForm, setJobForm] = useState({
     serviceType: 'tire_change',
     clientAddress: '',
     notes: '',
     clientLocation: {
-      coordinates: [36.8219, -1.2921]
+      coordinates: [36.8219, -1.2921] // Default Nairobi coordinates
     }
   });
 
@@ -34,6 +35,7 @@ const ClientDashboard = () => {
         },
         (error) => {
           console.error('Geolocation error:', error);
+          // Default location already set
           loadNearbyGarages(-1.2921, 36.8219);
         }
       );

@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Load data based on active tab
   useEffect(() => {
     loadStats();
     loadUsers();

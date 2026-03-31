@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { signInWithGoogle, signOutGoogle, handleRedirectResult } from '../config/firebase';
-import { auth as apiAuth } from '../services/api';
+import { auth } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -19,17 +18,6 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const checkRedirectResult = async () => {
-      const redirectResult = await handleRedirectResult();
-      if (redirectResult.success) {
-        // User signed in via redirect, now authenticate with backend
-        await handleGoogleUser(redirectResult.user, 'client');
-      }
-    };
-    checkRedirectResult();
-  }, []);
-
-  useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       loadUser();
@@ -40,7 +28,7 @@ export const AuthProvider = ({ children }) => {
 
   const loadUser = async () => {
     try {
-      const response = await apiAuth.getMe();
+      const response = await auth.getMe();
       const { user: userData, garage: garageData } = response.data;
       setUser(userData);
       if (garageData) setGarage(garageData);
@@ -53,49 +41,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const handleGoogleUser = async (googleUser, role) => {
-    try {
-      const { email, fullName, uid } = googleUser;
-      
-      // Try to login with email
-      const loginResult = await apiAuth.login({ identifier: email, password: uid });
-      
-      if (loginResult.data?.success) {
-        const { token, user: userData, garage: garageData } = loginResult.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        if (garageData) setGarage(garageData);
-        return { success: true };
-      }
-      
-      // Register new user
-      const registerPayload = {
-        phone: '',
-        email,
-        password: uid,
-        fullName,
-        role,
-      };
-      
-      const registerResult = await apiAuth.register(registerPayload);
-      
-      if (registerResult.data?.success) {
-        const { token, user: userData, garage: garageData } = registerResult.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        if (garageData) setGarage(garageData);
-        return { success: true };
-      }
-      
-      return { success: false, error: 'Failed to authenticate with Google' };
-    } catch (err) {
-      console.error('Google user handling error:', err);
-      return { success: false, error: err.response?.data?.error || 'Google authentication failed' };
-    }
-  };
-
   const register = async (userData, businessDetails = null) => {
     try {
       const payload = {
@@ -103,7 +48,7 @@ export const AuthProvider = ({ children }) => {
         role: businessDetails ? 'garage' : 'client',
         businessDetails,
       };
-      const response = await apiAuth.register(payload);
+      const response = await auth.register(payload);
       const { token, user: userDataRes, garage: garageDataRes } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userDataRes));
@@ -117,7 +62,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (identifier, password) => {
     try {
-      const response = await apiAuth.login({ identifier, password });
+      const response = await auth.login({ identifier, password });
       const { token, user: userData, garage: garageData } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
@@ -129,29 +74,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const googleLogin = async (role = 'client') => {
-    try {
-      const googleResult = await signInWithGoogle();
-      
-      if (googleResult.redirect) {
-        // Redirect happening, user will come back
-        return { success: false, redirect: true, message: googleResult.message };
-      }
-      
-      if (!googleResult.success) {
-        return { success: false, error: googleResult.error };
-      }
-
-      return await handleGoogleUser(googleResult.user, role);
-      
-    } catch (err) {
-      console.error('Google login error:', err);
-      return { success: false, error: err.response?.data?.error || 'Google login failed' };
-    }
-  };
-
-  const logout = async () => {
-    await signOutGoogle();
+  const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
@@ -165,7 +88,6 @@ export const AuthProvider = ({ children }) => {
     error,
     register,
     login,
-    googleLogin,
     logout,
     isAuthenticated: !!user,
     isClient: user?.role === 'client',
