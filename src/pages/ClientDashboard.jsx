@@ -4,10 +4,10 @@ import { useSocket } from '../context/SocketContext';
 import { client } from '../services/api';
 import ReviewModal from '../components/common/ReviewModal';
 
-const ClientDashboard = () => {
+const ClientDashboard = ({ initialTab = 'request' }) => {
   const { user, logout } = useAuth();
   const { socket, isConnected } = useSocket();
-  const [activeTab, setActiveTab] = useState('request');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [jobs, setJobs] = useState([]);
   const [nearbyGarages, setNearbyGarages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
