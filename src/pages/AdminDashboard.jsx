@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
+import useForm from '../hooks/useForm';
+import useDebounce from '../hooks/useDebounce';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -15,8 +17,9 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
-  // Set active section based on URL path
   useEffect(() => {
     const path = location.pathname;
     if (path === '/users') {
@@ -39,6 +42,17 @@ const AdminDashboard = () => {
     loadJobs();
     loadVehicles();
   }, []);
+
+  useEffect(() => {
+    if (debouncedSearch) {
+      filterData();
+    } else {
+      loadUsers();
+      loadGarages();
+      loadJobs();
+      loadVehicles();
+    }
+  }, [debouncedSearch]);
 
   const loadStats = async () => {
     try {
@@ -82,6 +96,24 @@ const AdminDashboard = () => {
       setVehicles(response.data.vehicles);
     } catch (err) {
       console.error('Failed to load vehicles:', err);
+    }
+  };
+
+  const filterData = () => {
+    if (activeSection === 'users') {
+      const filtered = users.filter(user => 
+        user.fullName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        user.phone?.includes(debouncedSearch) ||
+        user.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
+      setUsers(filtered);
+    } else if (activeSection === 'garages') {
+      const filtered = garages.filter(garage => 
+        garage.businessName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        garage.businessPhone?.includes(debouncedSearch) ||
+        garage.address?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
+      setGarages(filtered);
     }
   };
 
@@ -136,8 +168,21 @@ const AdminDashboard = () => {
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const getStatusText = (status) => {
+    const texts = {
+      pending: 'Pending',
+      accepted: 'Accepted',
+      en_route: 'En Route',
+      in_progress: 'In Progress',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
+    };
+    return texts[status] || status;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header Banner */}
       <div className="bg-gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div>
@@ -164,6 +209,26 @@ const AdminDashboard = () => {
         {success && (
           <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg">
             {success}
+          </div>
+        )}
+
+        {/* Search Bar for Data Sections */}
+        {(activeSection === 'users' || activeSection === 'garages') && (
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder={`Search ${activeSection === 'users' ? 'users by name, phone, or email' : 'garages by name, phone, or address'}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
           </div>
         )}
 
@@ -230,6 +295,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Users Section */}
         {activeSection === 'users' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -281,6 +347,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Garages Section */}
         {activeSection === 'garages' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -332,6 +399,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Jobs Section */}
         {activeSection === 'jobs' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -353,7 +421,7 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{jobItem.garageId?.businessName || 'Not assigned'}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(jobItem.status)}`}>
-                          {jobItem.status}
+                          {getStatusText(jobItem.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -367,6 +435,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Vehicles Section */}
         {activeSection === 'vehicles' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
