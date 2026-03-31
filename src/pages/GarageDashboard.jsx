@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
 
 const GarageDashboard = () => {
   const { user, garage: garageProfile, logout } = useAuth();
+  const { socket, isConnected } = useSocket();
   const [activeTab, setActiveTab] = useState('available');
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
@@ -11,7 +13,10 @@ const GarageDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+  const [newJobAlert, setNewJobAlert] = useState(null);
+  const audioRef = useRef(null);
+
+  // Load data
   useEffect(() => {
     loadAvailableJobs();
     loadMyJobs();
@@ -19,6 +24,40 @@ const GarageDashboard = () => {
       setIsOnline(garageProfile.isOnline);
     }
   }, []);
+
+  // Socket event listeners for real-time job alerts
+  useEffect(() => {
+    if (!socket || !isConnected || !isOnline) return;
+
+    // Listen for new job alerts
+    socket.on('new_job_alert', (job) => {
+      console.log('New job alert received:', job);
+      setNewJobAlert(job);
+      
+      // Play notification sound if available
+      if (audioRef.current) {
+        audioRef.current.play().catch(e => console.log('Audio play failed:', e));
+      }
+      
+      // Refresh available jobs
+      loadAvailableJobs();
+      
+      // Auto-hide alert after 10 seconds
+      setTimeout(() => setNewJobAlert(null), 10000);
+    });
+
+    // Listen for job status updates
+    socket.on('job_status_update', (updatedJob) => {
+      console.log('Job status update:', updatedJob);
+      loadMyJobs();
+      loadAvailableJobs();
+    });
+
+    return () => {
+      socket.off('new_job_alert');
+      socket.off('job_status_update');
+    };
+  }, [socket, isConnected, isOnline]);
 
   const loadAvailableJobs = async () => {
     try {
@@ -44,6 +83,15 @@ const GarageDashboard = () => {
       const response = await garage.toggleOnlineStatus(!isOnline);
       setIsOnline(response.data.isOnline);
       setSuccess(response.data.message);
+      
+      // Emit online status change to socket
+      if (socket && isConnected) {
+        socket.emit('garage_status_change', { 
+          garageId: garageProfile?._id, 
+          isOnline: !isOnline 
+        });
+      }
+      
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update status');
@@ -58,6 +106,16 @@ const GarageDashboard = () => {
     try {
       const response = await garage.updateJobStatus(jobId, 'accepted');
       setSuccess(`Job accepted! You can now navigate to the client.`);
+      
+      // Emit job acceptance to socket
+      if (socket && isConnected) {
+        socket.emit('job_accepted', { 
+          jobId, 
+          garageId: garageProfile?._id,
+          garageName: garageProfile?.businessName
+        });
+      }
+      
       loadAvailableJobs();
       loadMyJobs();
       setTimeout(() => setSuccess(''), 3000);
@@ -80,6 +138,16 @@ const GarageDashboard = () => {
         cancelled: 'Job cancelled.'
       };
       setSuccess(statusMessages[status] || `Job status updated to ${status}`);
+      
+      // Emit status update to socket
+      if (socket && isConnected) {
+        socket.emit('job_status_update', { 
+          jobId, 
+          status,
+          garageId: garageProfile?._id
+        });
+      }
+      
       loadMyJobs();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -140,6 +208,9 @@ const GarageDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Audio element for notifications */}
+      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
+      
       {/* Header */}
       <div className="bg-green-600 text-white sticky top-0 z-10 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -147,6 +218,7 @@ const GarageDashboard = () => {
             <div>
               <h1 className="text-2xl font-bold">Roadside Rescue - Garage</h1>
               <p className="text-sm text-green-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
+              {isConnected && <p className="text-xs text-green-200">🔌 Real-time connected</p>}
             </div>
             <div className="flex items-center gap-4">
               <button
@@ -171,6 +243,42 @@ const GarageDashboard = () => {
         </div>
       </div>
 
+      {/* New Job Alert Modal */}
+      {newJobAlert && (
+        <div className="fixed top-20 right-4 z-50 animate-bounce-in">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-lg max-w-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-yellow-800">New Rescue Request!</p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  {getServiceName(newJobAlert.serviceType)} at {newJobAlert.clientAddress}
+                </p>
+                <button
+                  onClick={() => {
+                    setNewJobAlert(null);
+                    setActiveTab('available');
+                  }}
+                  className="mt-2 text-xs font-medium text-yellow-800 hover:text-yellow-900"
+                >
+                  View Now →
+                </button>
+              </div>
+              <button
+                onClick={() => setNewJobAlert(null)}
+                className="ml-4 text-yellow-500 hover:text-yellow-700"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Alerts */}
@@ -193,7 +301,7 @@ const GarageDashboard = () => {
               <p className="font-medium">Current Status</p>
               <p className={`text-sm ${isOnline ? 'text-green-700' : 'text-gray-600'}`}>
                 {isOnline 
-                  ? 'You are online and will receive job alerts from nearby clients' 
+                  ? 'You are online and will receive real-time job alerts from nearby clients' 
                   : 'You are offline. Go online to start receiving job requests'}
               </p>
             </div>
@@ -214,6 +322,7 @@ const GarageDashboard = () => {
             }`}
           >
             Available Jobs ({availableJobs.length})
+            {newJobAlert && <span className="ml-2 w-2 h-2 bg-red-500 rounded-full inline-block animate-pulse"></span>}
           </button>
           <button
             onClick={() => setActiveTab('myjobs')}
@@ -234,7 +343,7 @@ const GarageDashboard = () => {
             
             {!isOnline && (
               <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-700">⚠️ You are currently offline. Go online to accept jobs.</p>
+                <p className="text-yellow-700">⚠️ You are currently offline. Go online to accept jobs and receive real-time alerts.</p>
               </div>
             )}
             
@@ -244,12 +353,12 @@ const GarageDashboard = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <p className="mt-2">No pending rescue requests</p>
-                <p className="text-sm">Check back later or go online to receive alerts</p>
+                <p className="text-sm">Check back later or go online to receive real-time alerts</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {availableJobs.map((job) => (
-                  <div key={job._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={job._id} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${newJobAlert?._id === job._id ? 'border-yellow-400 bg-yellow-50' : ''}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <span className="font-medium text-gray-900">{getServiceName(job.serviceType)}</span>
