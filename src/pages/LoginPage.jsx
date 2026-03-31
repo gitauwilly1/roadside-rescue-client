@@ -30,24 +30,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
-              </svg>
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Roadside Rescue
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in to your account
-          </p>
-        </div>
-
+        
         {/* Login Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
