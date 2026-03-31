@@ -3,6 +3,12 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { client } from '../services/api';
+import useLocation from '../hooks/useLocation';
+import useJobTracking from '../hooks/useJobTracking';
+import useForm from '../hooks/useForm';
+import ServiceSelector from '../components/client/ServiceSelector';
+import LocationPicker from '../components/client/LocationPicker';
+import JobCard from '../components/client/JobCard';
 import ReviewModal from '../components/common/ReviewModal';
 
 const ClientDashboard = () => {
@@ -10,30 +16,28 @@ const ClientDashboard = () => {
   const { socket, isConnected } = useSocket();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState('request');
-  const [jobs, setJobs] = useState([]);
   const [nearbyGarages, setNearbyGarages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [activeJob, setActiveJob] = useState(null);
-  const [garageLocation, setGarageLocation] = useState(null);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  
-  const [jobForm, setJobForm] = useState({
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  const { location: userLocation, getCurrentPosition } = useLocation({ watch: false });
+  const { jobs, activeJob, loadJobs } = useJobTracking('client', socket, isConnected);
+
+  const { values, handleChange, handleSubmit, isSubmitting, setFieldValue } = useForm({
     serviceType: 'tire_change',
     clientAddress: '',
     notes: '',
-    clientLocation: {
-      coordinates: [36.8219, -1.2921]
-    }
+    clientLocation: { coordinates: [36.8219, -1.2921] }
   });
 
-  // Set active section based on URL path
+  // Set active section based on URL
   useEffect(() => {
-    if (location.pathname === '/history') {
+    const path = location.pathname;
+    if (path === '/history') {
       setActiveSection('history');
-    } else if (location.pathname === '/garages') {
+    } else if (path === '/garages') {
       setActiveSection('garages');
     } else {
       setActiveSection('request');
@@ -41,91 +45,16 @@ const ClientDashboard = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setJobForm(prev => ({
-            ...prev,
-            clientLocation: { coordinates: [longitude, latitude] }
-          }));
-          loadNearbyGarages(latitude, longitude);
-        },
-        () => loadNearbyGarages(-1.2921, 36.8219)
-      );
-    } else {
-      loadNearbyGarages(-1.2921, 36.8219);
+    if (userLocation) {
+      setFieldValue('clientLocation', { coordinates: userLocation.coordinates });
+      loadNearbyGarages(userLocation.latitude, userLocation.longitude);
     }
-  }, []);
+  }, [userLocation]);
 
+  // Initial location load
   useEffect(() => {
-    loadJobs();
+    getCurrentPosition();
   }, []);
-
-  useEffect(() => {
-    if (!socket || !isConnected) return;
-
-    socket.on('job_status_update', (updatedJob) => {
-      console.log('Job status update received:', updatedJob);
-      
-      setJobs(prevJobs => 
-        prevJobs.map(job => 
-          job._id === updatedJob._id ? { ...job, ...updatedJob } : job
-        )
-      );
-      
-      if (activeJob && activeJob._id === updatedJob._id) {
-        setActiveJob(updatedJob);
-        
-        const statusMessages = {
-          accepted: '✅ Your rescue request has been accepted! A garage is on their way.',
-          en_route: '🚗 The garage is en route to your location!',
-          in_progress: '🔧 The mechanic has arrived and is working on your vehicle.',
-          completed: '🎉 Your rescue is complete! Please rate your experience.'
-        };
-        
-        if (statusMessages[updatedJob.status]) {
-          setSuccess(statusMessages[updatedJob.status]);
-          setTimeout(() => setSuccess(''), 5000);
-        }
-      }
-      
-      loadJobs();
-    });
-
-    socket.on('garage_location_update', ({ jobId, location }) => {
-      if (activeJob && activeJob._id === jobId) {
-        setGarageLocation(location);
-      }
-    });
-
-    return () => {
-      socket.off('job_status_update');
-      socket.off('garage_location_update');
-    };
-  }, [socket, isConnected, activeJob]);
-
-  const loadJobs = async () => {
-    try {
-      const response = await client.getJobs({ limit: 10 });
-      setJobs(response.data.jobs);
-      
-      const active = response.data.jobs.find(job => 
-        ['pending', 'accepted', 'en_route', 'in_progress'].includes(job.status)
-      );
-      if (active) {
-        setActiveJob(active);
-        if (socket && isConnected) {
-          socket.emit('join_job_room', active._id);
-        }
-      } else {
-        setActiveJob(null);
-        setGarageLocation(null);
-      }
-    } catch (err) {
-      console.error('Failed to load jobs:', err);
-    }
-  };
 
   const loadNearbyGarages = async (lat, lng) => {
     try {
@@ -136,27 +65,16 @@ const ClientDashboard = () => {
     }
   };
 
-  const handleJobFormChange = (e) => {
-    const { name, value } = e.target;
-    setJobForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmitJob = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-
-    if (!jobForm.clientAddress) {
+  const onSubmitJob = async () => {
+    if (!values.clientAddress) {
       setError('Please enter your location address');
-      setIsLoading(false);
-      return;
+      return false;
     }
 
     try {
-      const response = await client.createJob(jobForm);
+      const response = await client.createJob(values);
       setSuccess('Job request created successfully! A nearby garage will respond shortly.');
-      setJobForm(prev => ({ ...prev, notes: '' }));
+      setFieldValue('notes', '');
       loadJobs();
       
       if (socket && isConnected) {
@@ -164,10 +82,11 @@ const ClientDashboard = () => {
       }
       
       setTimeout(() => setSuccess(''), 5000);
+      return true;
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create job request');
-    } finally {
-      setIsLoading(false);
+      setTimeout(() => setError(''), 5000);
+      return false;
     }
   };
 
@@ -187,27 +106,16 @@ const ClientDashboard = () => {
     setSelectedJobForReview(null);
   };
 
-  const getServiceName = (serviceType) => {
-    const services = {
-      tire_change: '🔧 Tire Change',
-      jump_start: '🔋 Jump Start',
-      fuel_delivery: '⛽ Fuel Delivery',
-      towing_5km: '🚚 Towing (up to 5km)',
-      custom: '🔧 Custom Service'
+  const getStatusIcon = (status) => {
+    const icons = {
+      pending: '⏳',
+      accepted: '✅',
+      en_route: '🚗',
+      in_progress: '🔧',
+      completed: '🎉',
+      cancelled: '❌'
     };
-    return services[serviceType] || serviceType;
-  };
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      accepted: 'bg-red-100 text-red-800',
-      en_route: 'bg-orange-100 text-orange-800',
-      in_progress: 'bg-blue-100 text-blue-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-gray-100 text-gray-800'
-    };
-    return badges[status] || 'bg-gray-100 text-gray-800';
+    return icons[status] || '📋';
   };
 
   const getStatusText = (status) => {
@@ -220,18 +128,6 @@ const ClientDashboard = () => {
       cancelled: 'Cancelled'
     };
     return texts[status] || status;
-  };
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      pending: '⏳',
-      accepted: '✅',
-      en_route: '🚗',
-      in_progress: '🔧',
-      completed: '🎉',
-      cancelled: '❌'
-    };
-    return icons[status] || '📋';
   };
 
   return (
@@ -336,52 +232,28 @@ const ClientDashboard = () => {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmitJob} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Service Needed *
-                  </label>
-                  <select
-                    name="serviceType"
-                    value={jobForm.serviceType}
-                    onChange={handleJobFormChange}
-                    className="input-primary"
-                    required
-                  >
-                    <option value="tire_change">🔧 Tire Change - KES 1,500 - 2,500</option>
-                    <option value="jump_start">🔋 Jump Start - KES 1,000 - 1,800</option>
-                    <option value="fuel_delivery">⛽ Fuel Delivery - KES 1,200 - 2,000</option>
-                    <option value="towing_5km">🚚 Towing (up to 5km) - KES 2,500 - 4,000</option>
-                    <option value="custom">🔧 Custom Service - Will be quoted</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Location Address *
-                  </label>
-                  <input
-                    type="text"
-                    name="clientAddress"
-                    value={jobForm.clientAddress}
-                    onChange={handleJobFormChange}
-                    placeholder="e.g., Mombasa Road, Near Gate A, Nairobi"
-                    className="input-primary"
-                    required
+              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmitJob); }}>
+                <ServiceSelector
+                  value={values.serviceType}
+                  onChange={(val) => setFieldValue('serviceType', val)}
+                />
+                
+                <div className="mt-4">
+                  <LocationPicker
+                    address={values.clientAddress}
+                    onAddressChange={(val) => setFieldValue('clientAddress', val)}
+                    onCoordinatesChange={(coords) => setFieldValue('clientLocation', coords)}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                     We'll use your device location to find nearby garages
-                  </p>
                 </div>
-
-                <div>
+                
+                <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Additional Notes (Optional)
                   </label>
                   <textarea
                     name="notes"
-                    value={jobForm.notes}
-                    onChange={handleJobFormChange}
+                    value={values.notes}
+                    onChange={handleChange}
                     rows="3"
                     placeholder="e.g., Car is a white Toyota Fielder, near the Total petrol station"
                     className="input-primary resize-none"
@@ -390,10 +262,10 @@ const ClientDashboard = () => {
 
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+                  disabled={isSubmitting}
+                  className="w-full btn-primary flex items-center justify-center gap-2 py-3 mt-6"
                 >
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Requesting...</span>
@@ -411,7 +283,7 @@ const ClientDashboard = () => {
             )}
 
             <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
-              <h3 className="font-medium text-red-800 mb-2">🚨 Emergency Tips</h3>
+              <h3 className="font-medium text-red-800 mb-2"> Emergency Tips</h3>
               <ul className="text-sm text-red-700 space-y-1">
                 <li>• Stay in a safe location away from traffic</li>
                 <li>• Turn on your hazard lights</li>
@@ -438,43 +310,11 @@ const ClientDashboard = () => {
             ) : (
               <div className="space-y-4">
                 {jobs.map((job) => (
-                  <div key={job._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="font-medium text-gray-900">{getServiceName(job.serviceType)}</span>
-                        <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(job.status)}`}>
-                          {getStatusText(job.status)}
-                        </span>
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(job.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-1">📍 {job.clientAddress}</p>
-                    {job.garageId && (
-                      <p className="text-sm text-gray-600">
-                         Garage: {typeof job.garageId === 'object' ? job.garageId.businessName : 'Assigned'}
-                      </p>
-                    )}
-                    {job.notes && (
-                      <p className="text-sm text-gray-500 mt-2 italic">"{job.notes}"</p>
-                    )}
-                    
-                    {job.status === 'completed' && !job.hasReview && (
-                      <button
-                        onClick={() => openReviewModal(job)}
-                        className="mt-3 px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 transition-colors flex items-center gap-1"
-                      >
-                         Rate Your Experience
-                      </button>
-                    )}
-                    
-                    {job.status === 'completed' && job.hasReview && (
-                      <div className="mt-3 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm inline-flex items-center gap-1">
-                         Review Submitted
-                      </div>
-                    )}
-                  </div>
+                  <JobCard
+                    key={job._id}
+                    job={job}
+                    onReview={openReviewModal}
+                  />
                 ))}
               </div>
             )}
@@ -509,7 +349,7 @@ const ClientDashboard = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{garage.address}</p>
-                        <p className="text-sm text-gray-600">📞 {garage.businessPhone}</p>
+                        <p className="text-sm text-gray-600"> {garage.businessPhone}</p>
                         <div className="flex gap-2 mt-2">
                           {garage.services?.slice(0, 3).map((service, idx) => (
                             <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
