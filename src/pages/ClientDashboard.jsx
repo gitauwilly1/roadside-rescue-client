@@ -102,26 +102,10 @@ const ClientDashboard = () => {
   const loadJobs = async () => {
     try {
       const response = await client.getJobs({ limit: 10 });
+      // Backend now returns hasReview field directly
+      setJobs(response.data.jobs);
       
-      // Check if jobs have reviews
-      const jobsWithReviewStatus = await Promise.all(
-        response.data.jobs.map(async (job) => {
-          if (job.status === 'completed') {
-            try {
-              // Check if review exists (we'll need a new endpoint or check in job)
-              // For now, we'll assume no review by default and let user submit
-              return { ...job, hasReview: false };
-            } catch {
-              return { ...job, hasReview: false };
-            }
-          }
-          return { ...job, hasReview: false };
-        })
-      );
-      
-      setJobs(jobsWithReviewStatus);
-      
-      const active = jobsWithReviewStatus.find(job => 
+      const active = response.data.jobs.find(job => 
         ['pending', 'accepted', 'en_route', 'in_progress'].includes(job.status)
       );
       if (active) {
@@ -185,7 +169,7 @@ const ClientDashboard = () => {
   const handleReviewSubmitted = () => {
     setSuccess('Thank you for your review!');
     setTimeout(() => setSuccess(''), 3000);
-    loadJobs();
+    loadJobs(); // Reload to update review status
   };
 
   const openReviewModal = (job) => {
@@ -326,7 +310,7 @@ const ClientDashboard = () => {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            My History
+            My History ({jobs.filter(j => j.status === 'completed').length} completed)
           </button>
           <button
             onClick={() => setActiveTab('garages')}
@@ -501,7 +485,7 @@ const ClientDashboard = () => {
                     )}
                     
                     {job.status === 'completed' && job.hasReview && (
-                      <div className="mt-3 px-3 py-1 bg-gray-100 text-gray-500 rounded-lg text-sm inline-flex items-center gap-1">
+                      <div className="mt-3 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm inline-flex items-center gap-1">
                         ✅ Review Submitted
                       </div>
                     )}
