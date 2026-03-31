@@ -4,10 +4,10 @@ import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
 import { playNotificationAudio } from '../utils/playNotification';
 
-const GarageDashboard = () => {
+const GarageDashboard = ({ initialTab = 'available' }) => {
   const { user, garage: garageProfile, logout } = useAuth();
   const { socket, isConnected } = useSocket();
-  const [activeTab, setActiveTab] = useState('available');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [isOnline, setIsOnline] = useState(false);
