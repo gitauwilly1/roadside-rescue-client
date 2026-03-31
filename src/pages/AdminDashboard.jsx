@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
 
 const AdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState('stats');
   const [stats, setStats] = useState(null);
@@ -16,11 +16,12 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Set active section based on URL path
   useEffect(() => {
     const path = location.pathname;
     if (path === '/users') {
       setActiveSection('users');
-    } else if (path === '/garages') {
+    } else if (path === '/admin/garages') {
       setActiveSection('garages');
     } else if (path === '/jobs') {
       setActiveSection('jobs');
@@ -137,31 +138,21 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Banner */}
       <div className="bg-gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">
-                {activeSection === 'stats' && ' Admin Dashboard'}
-                {activeSection === 'users' && ' User Management'}
-                {activeSection === 'garages' && ' Garage Management'}
-                {activeSection === 'jobs' && ' Job Management'}
-                {activeSection === 'vehicles' && ' Vehicle Management'}
-              </h1>
-              <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
-            </div>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-all"
-            >
-              Logout
-            </button>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {activeSection === 'stats' && ' Admin Dashboard'}
+              {activeSection === 'users' && ' User Management'}
+              {activeSection === 'garages' && ' Garage Management'}
+              {activeSection === 'jobs' && ' Job Management'}
+              {activeSection === 'vehicles' && ' Vehicle Management'}
+            </h1>
+            <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Alerts */}
         {error && (
@@ -176,6 +167,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Stats Section */}
         {activeSection === 'stats' && stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
@@ -386,7 +378,7 @@ const AdminDashboard = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                   </tr>
+                  </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {vehicles.map((vehicle) => (
