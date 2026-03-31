@@ -12,6 +12,13 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const getDashboardLink = () => {
+    if (isClient) return '/';
+    if (isGarage) return '/';
+    if (isAdmin) return '/';
+    return '/login';
+  };
+
   const getBusinessName = () => {
     if (isGarage && garage) return garage.businessName;
     return user?.fullName || 'User';
@@ -21,20 +28,12 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
-  const handleClientNav = (tab) => {
-    navigate('/client-dashboard', { state: { initialTab: tab } });
-  };
-
-  const handleGarageNav = (tab) => {
-    navigate('/garage-dashboard', { state: { initialTab: tab } });
-  };
-
   return (
     <nav className="bg-gradient-primary text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
+          <Link to={getDashboardLink()} className="flex items-center space-x-2 group">
             <div className="h-9 w-9 bg-white rounded-full flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
               <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -44,87 +43,85 @@ const Navbar = () => {
             <span className="font-bold text-xl tracking-tight">Roadside Rescue</span>
           </Link>
 
-          {/* Navigation Links - Role-based */}
           <div className="hidden md:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
                 {isClient && (
                   <>
                     <Link 
-                      to="/client-dashboard" 
-                      state={{ initialTab: 'request' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/client-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/" 
+                      className={`transition-colors duration-200 ${isActive('/') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      🚨 Request Rescue
+                      Request Rescue
                     </Link>
                     <Link 
-                      to="/client-dashboard" 
-                      state={{ initialTab: 'history' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/client-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/history" 
+                      className={`transition-colors duration-200 ${isActive('/history') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      📋 My History
+                      My History
                     </Link>
                     <Link 
-                      to="/client-dashboard" 
-                      state={{ initialTab: 'garages' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/client-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/garages" 
+                      className={`transition-colors duration-200 ${isActive('/garages') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      🏪 Nearby Garages
+                      Nearby Garages
                     </Link>
                   </>
                 )}
                 {isGarage && (
                   <>
                     <Link 
-                      to="/garage-dashboard" 
-                      state={{ initialTab: 'available' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/garage-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/" 
+                      className={`transition-colors duration-200 ${isActive('/') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      🚨 Available Jobs
+                      Available Jobs
                     </Link>
                     <Link 
-                      to="/garage-dashboard" 
-                      state={{ initialTab: 'myjobs' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/garage-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/my-jobs" 
+                      className={`transition-colors duration-200 ${isActive('/my-jobs') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      📋 My Jobs
+                      My Jobs
                     </Link>
                   </>
                 )}
                 {isAdmin && (
                   <>
                     <Link 
-                      to="/admin-dashboard" 
-                      state={{ initialTab: 'stats' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/admin-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/" 
+                      className={`transition-colors duration-200 ${isActive('/') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      📊 Dashboard
+                      Dashboard
                     </Link>
                     <Link 
-                      to="/admin-dashboard" 
-                      state={{ initialTab: 'users' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/admin-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/users" 
+                      className={`transition-colors duration-200 ${isActive('/users') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      👥 Users
+                      Users
                     </Link>
                     <Link 
-                      to="/admin-dashboard" 
-                      state={{ initialTab: 'garages' }}
-                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/admin-dashboard') ? 'border-b-2 border-white' : ''}`}
+                      to="/garages" 
+                      className={`transition-colors duration-200 ${isActive('/garages') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
-                      🏪 Garages
+                      Garages
+                    </Link>
+                    <Link 
+                      to="/jobs" 
+                      className={`transition-colors duration-200 ${isActive('/jobs') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
+                    >
+                      Jobs
                     </Link>
                   </>
                 )}
               </>
             ) : (
               <>
-                <Link to="/login" className="text-white/90 hover:text-white transition-colors duration-200">Login</Link>
-                <Link to="/register" className="text-white/90 hover:text-white transition-colors duration-200">Register</Link>
+                <Link to="/login" className="text-white/80 hover:text-white transition-colors">Login</Link>
+                <Link to="/register" className="text-white/80 hover:text-white transition-colors">Register</Link>
               </>
             )}
           </div>
 
+          {/* User Menu */}
           {isAuthenticated && (
             <div className="flex items-center space-x-4">
               <div className="hidden md:block text-right">
