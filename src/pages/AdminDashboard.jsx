@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('stats');
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState('stats');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [garages, setGarages] = useState([]);
@@ -13,6 +15,21 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/users') {
+      setActiveSection('users');
+    } else if (path === '/garages') {
+      setActiveSection('garages');
+    } else if (path === '/jobs') {
+      setActiveSection('jobs');
+    } else if (path === '/vehicles') {
+      setActiveSection('vehicles');
+    } else {
+      setActiveSection('stats');
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     loadStats();
@@ -125,7 +142,13 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Admin Control Panel</h1>
+              <h1 className="text-2xl font-bold">
+                {activeSection === 'stats' && '📊 Admin Dashboard'}
+                {activeSection === 'users' && '👥 User Management'}
+                {activeSection === 'garages' && '🏪 Garage Management'}
+                {activeSection === 'jobs' && '📋 Job Management'}
+                {activeSection === 'vehicles' && '🚗 Vehicle Management'}
+              </h1>
               <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
             </div>
             <button
@@ -153,62 +176,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('stats')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
-              activeTab === 'stats'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            📊 Dashboard Stats
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
-              activeTab === 'users'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            👥 Users ({users.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('garages')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
-              activeTab === 'garages'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            🏪 Garages ({garages.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('jobs')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
-              activeTab === 'jobs'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            📋 Jobs ({jobs.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('vehicles')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
-              activeTab === 'vehicles'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            🚗 Vehicles ({vehicles.length})
-          </button>
-        </div>
-
-        {/* Stats Tab */}
-        {activeTab === 'stats' && stats && (
+        {activeSection === 'stats' && stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
               <div className="flex items-center justify-between">
@@ -270,8 +238,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Users Tab */}
-        {activeTab === 'users' && (
+        {activeSection === 'users' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -322,8 +289,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Garages Tab */}
-        {activeTab === 'garages' && (
+        {activeSection === 'garages' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -374,8 +340,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Jobs Tab */}
-        {activeTab === 'jobs' && (
+        {activeSection === 'jobs' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -410,8 +375,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Vehicles Tab */}
-        {activeTab === 'vehicles' && (
+        {activeSection === 'vehicles' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -422,7 +386,7 @@ const AdminDashboard = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </tr>
+                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {vehicles.map((vehicle) => (
