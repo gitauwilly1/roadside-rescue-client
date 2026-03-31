@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { client } from '../services/api';
 import ReviewModal from '../components/common/ReviewModal';
 
-const ClientDashboard = ({ initialTab = 'request' }) => {
+const ClientDashboard = () => {
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState('request');
   const [jobs, setJobs] = useState([]);
   const [nearbyGarages, setNearbyGarages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +28,17 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
       coordinates: [36.8219, -1.2921]
     }
   });
+
+  // Set active section based on URL path
+  useEffect(() => {
+    if (location.pathname === '/history') {
+      setActiveSection('history');
+    } else if (location.pathname === '/garages') {
+      setActiveSection('garages');
+    } else {
+      setActiveSection('request');
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -266,8 +279,16 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
         {/* Status and Connection */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.fullName?.split(' ')[0]}!</h1>
-            <p className="text-sm text-gray-500">Get emergency roadside assistance instantly</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {activeSection === 'request' && '🚨 Emergency Rescue Request'}
+              {activeSection === 'history' && '📋 My Rescue History'}
+              {activeSection === 'garages' && '🏪 Nearby Verified Garages'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {activeSection === 'request' && 'Get immediate roadside assistance'}
+              {activeSection === 'history' && 'View all your past rescue requests'}
+              {activeSection === 'garages' && 'Find trusted garages near your location'}
+            </p>
           </div>
           {isConnected && (
             <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">
@@ -275,40 +296,6 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
               <span>Real-time connected</span>
             </div>
           )}
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('request')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
-              activeTab === 'request'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            🚨 Request Rescue
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
-              activeTab === 'history'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            📋 My History ({jobs.filter(j => j.status === 'completed').length})
-          </button>
-          <button
-            onClick={() => setActiveTab('garages')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
-              activeTab === 'garages'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            🏪 Nearby Garages
-          </button>
         </div>
 
         {/* Alerts */}
@@ -324,8 +311,8 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
           </div>
         )}
 
-        {/* Request Rescue Tab */}
-        {activeTab === 'request' && (
+        {/* Request Rescue Section */}
+        {activeSection === 'request' && (
           <div className="bg-white rounded-xl shadow-lg p-6 card-hover">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Emergency Rescue Request</h2>
             
@@ -342,7 +329,7 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
                   Your request is being processed. Please wait for assistance.
                 </p>
                 <button
-                  onClick={() => setActiveTab('history')}
+                  onClick={() => window.location.href = '/history'}
                   className="mt-4 btn-outline"
                 >
                   View Active Request
@@ -435,8 +422,8 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
           </div>
         )}
 
-        {/* History Tab */}
-        {activeTab === 'history' && (
+        {/* History Section */}
+        {activeSection === 'history' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">My Rescue History</h2>
             
@@ -494,8 +481,8 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
           </div>
         )}
 
-        {/* Nearby Garages Tab */}
-        {activeTab === 'garages' && (
+        {/* Nearby Garages Section */}
+        {activeSection === 'garages' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Nearby Verified Garages</h2>
             
