@@ -15,7 +15,7 @@ const Navbar = () => {
   const getDashboardLink = () => {
     if (isClient) return '/';
     if (isGarage) return '/';
-    if (isAdmin) return '/';
+    if (isAdmin) return '/admin';
     return '/login';
   };
 
@@ -87,8 +87,8 @@ const Navbar = () => {
                 {isAdmin && (
                   <>
                     <Link 
-                      to="/" 
-                      className={`transition-colors duration-200 ${isActive('/') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
+                      to="/admin" 
+                      className={`transition-colors duration-200 ${isActive('/admin') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
                       Dashboard
                     </Link>
@@ -99,8 +99,8 @@ const Navbar = () => {
                       Users
                     </Link>
                     <Link 
-                      to="/garages" 
-                      className={`transition-colors duration-200 ${isActive('/garages') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
+                      to="/admin/garages" 
+                      className={`transition-colors duration-200 ${isActive('/admin/garages') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
                       Garages
                     </Link>
@@ -109,6 +109,12 @@ const Navbar = () => {
                       className={`transition-colors duration-200 ${isActive('/jobs') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
                     >
                       Jobs
+                    </Link>
+                    <Link 
+                      to="/vehicles" 
+                      className={`transition-colors duration-200 ${isActive('/vehicles') ? 'text-white font-semibold border-b-2 border-white' : 'text-white/80 hover:text-white'}`}
+                    >
+                      Vehicles
                     </Link>
                   </>
                 )}
@@ -121,7 +127,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* User Menu */}
           {isAuthenticated && (
             <div className="flex items-center space-x-4">
               <div className="hidden md:block text-right">
