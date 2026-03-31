@@ -18,7 +18,7 @@ const RegisterPage = () => {
     businessPhone: '',
     address: '',
     location: {
-      coordinates: [36.8219, -1.2921] // Default Nairobi coordinates
+      coordinates: [36.8219, -1.2921] 
     },
     services: []
   });
