@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation as useRouterLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { client } from '../services/api';
-import useLocation from '../hooks/useLocation';
+import useGeoLocation from '../hooks/useLocation';
 import useJobTracking from '../hooks/useJobTracking';
 import useForm from '../hooks/useForm';
 import ServiceSelector from '../components/client/ServiceSelector';
@@ -14,7 +14,7 @@ import ReviewModal from '../components/common/ReviewModal';
 const ClientDashboard = () => {
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
-  const location = useLocation();
+  const routerLocation = useRouterLocation();
   const [activeSection, setActiveSection] = useState('request');
   const [nearbyGarages, setNearbyGarages] = useState([]);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
@@ -22,7 +22,7 @@ const ClientDashboard = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  const { location: userLocation, getCurrentPosition } = useLocation({ watch: false });
+  const { location: userLocation, getCurrentPosition } = useGeoLocation({ watch: false });
   const { jobs, activeJob, loadJobs } = useJobTracking('client', socket, isConnected);
 
   const { values, handleChange, handleSubmit, isSubmitting, setFieldValue } = useForm({
@@ -34,7 +34,7 @@ const ClientDashboard = () => {
 
   // Set active section based on URL
   useEffect(() => {
-    const path = location.pathname;
+    const path = routerLocation.pathname;
     if (path === '/history') {
       setActiveSection('history');
     } else if (path === '/garages') {
@@ -42,7 +42,7 @@ const ClientDashboard = () => {
     } else {
       setActiveSection('request');
     }
-  }, [location.pathname]);
+  }, [routerLocation.pathname]);
 
   useEffect(() => {
     if (userLocation) {
@@ -51,7 +51,6 @@ const ClientDashboard = () => {
     }
   }, [userLocation]);
 
-  // Initial location load
   useEffect(() => {
     getCurrentPosition();
   }, []);
