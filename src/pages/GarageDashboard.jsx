@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation as useRouterLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
+import useGeoLocation from '../hooks/useLocation';
 import useJobTracking from '../hooks/useJobTracking';
 import JobAlert from '../components/garage/JobAlert';
 import GarageJobCard from '../components/garage/GarageJobCard';
@@ -19,8 +20,11 @@ const GarageDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newJobAlert, setNewJobAlert] = useState(null);
+  const [activeJobId, setActiveJobId] = useState(null);
+  const locationIntervalRef = useRef(null);
 
-  const { jobs: myJobs, loadJobs: loadMyJobs } = useJobTracking('garage', socket, isConnected);
+  const { location: currentLocation, getCurrentPosition } = useGeoLocation({ watch: true });
+  const { jobs: myJobs, loadJobs: loadMyJobs, activeJob } = useJobTracking('garage', socket, isConnected);
 
   useEffect(() => {
     const path = routerLocation.pathname;
@@ -31,6 +35,53 @@ const GarageDashboard = () => {
     }
   }, [routerLocation.pathname]);
 
+  useEffect(() => {
+    if (activeJob && ['accepted', 'en_route', 'in_progress'].includes(activeJob.status)) {
+      setActiveJobId(activeJob._id);
+    } else {
+      setActiveJobId(null);
+    }
+  }, [activeJob]);
+
+  useEffect(() => {
+    // Clear existing interval
+    if (locationIntervalRef.current) {
+      clearInterval(locationIntervalRef.current);
+      locationIntervalRef.current = null;
+    }
+
+    // Start sharing location if garage has an active job that is en route or in progress
+    if (activeJob && socket && isConnected && ['en_route', 'in_progress'].includes(activeJob.status)) {
+      console.log('Starting location sharing for job:', activeJob._id);
+      
+      // Get initial location
+      getCurrentPosition();
+      
+      // Share location every 5 seconds
+      locationIntervalRef.current = setInterval(() => {
+        if (currentLocation && socket && isConnected) {
+          socket.emit('garage_location_update', {
+            jobId: activeJob._id,
+            location: {
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
+              coordinates: currentLocation.coordinates
+            }
+          });
+          console.log('Location shared:', currentLocation);
+        }
+      }, 5000);
+    }
+
+    return () => {
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+        locationIntervalRef.current = null;
+      }
+    };
+  }, [activeJob, socket, isConnected, currentLocation]);
+
+  // Load initial data
   useEffect(() => {
     loadAvailableJobs();
     loadMyJobs();
@@ -129,7 +180,7 @@ const GarageDashboard = () => {
     try {
       await garage.updateJobStatus(jobId, status);
       const statusMessages = {
-        en_route: 'You are now en route to the client!',
+        en_route: 'You are now en route to the client! Location sharing has started.',
         in_progress: 'You have arrived and are working on the vehicle.',
         completed: 'Job marked as completed. Thank you for your service!',
         cancelled: 'Job cancelled.'
@@ -177,7 +228,7 @@ const GarageDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'available' ? ' Emergency Rescue Requests' : '📋 My Assigned Jobs'}
+                {activeSection === 'available' ? '🚨 Emergency Rescue Requests' : '📋 My Assigned Jobs'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
@@ -199,6 +250,31 @@ const GarageDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Active Job Tracking Banner */}
+      {activeJob && ['accepted', 'en_route', 'in_progress'].includes(activeJob.status) && (
+        <div className="bg-blue-600 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="animate-pulse">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">
+                  {activeJob.status === 'accepted' && ' Location sharing will start when you mark as En Route'}
+                  {activeJob.status === 'en_route' && ' Location sharing active - Client can see your location'}
+                  {activeJob.status === 'in_progress' && '🔧 Service in progress - Location sharing active'}
+                </span>
+              </div>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                Job #{activeJob._id.slice(-6)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
