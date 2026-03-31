@@ -10,6 +10,7 @@ import ServiceSelector from '../components/client/ServiceSelector';
 import LocationPicker from '../components/client/LocationPicker';
 import JobCard from '../components/client/JobCard';
 import ReviewModal from '../components/common/ReviewModal';
+import LiveMap from '../components/common/LiveMap';
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -21,8 +22,9 @@ const ClientDashboard = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [garageLocation, setGarageLocation] = useState(null);
 
-  const { location: userLocation, getCurrentPosition } = useGeoLocation({ watch: false });
+  const { location: userLocation, getCurrentPosition } = useGeoLocation({ watch: true });
   const { jobs, activeJob, loadJobs } = useJobTracking('client', socket, isConnected);
 
   const { values, handleChange, handleSubmit, isSubmitting, setFieldValue } = useForm({
@@ -32,7 +34,6 @@ const ClientDashboard = () => {
     clientLocation: { coordinates: [36.8219, -1.2921] }
   });
 
-  // Set active section based on URL
   useEffect(() => {
     const path = routerLocation.pathname;
     if (path === '/history') {
@@ -50,6 +51,22 @@ const ClientDashboard = () => {
       loadNearbyGarages(userLocation.latitude, userLocation.longitude);
     }
   }, [userLocation]);
+
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleGarageLocation = ({ jobId, location }) => {
+      if (activeJob && activeJob._id === jobId) {
+        setGarageLocation(location);
+      }
+    };
+
+    socket.on('garage_location_update', handleGarageLocation);
+
+    return () => {
+      socket.off('garage_location_update', handleGarageLocation);
+    };
+  }, [socket, isConnected, activeJob]);
 
   useEffect(() => {
     getCurrentPosition();
@@ -140,31 +157,57 @@ const ClientDashboard = () => {
         />
       )}
 
-      {/* Active Job Emergency Banner */}
+      {/* Active Job Emergency Banner with Map */}
       {activeJob && activeJob.status !== 'completed' && (
         <div className="bg-gradient-primary text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="animate-pulse">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Emergency Rescue in Progress</p>
-                  <p className="text-xs opacity-90">Status: {getStatusText(activeJob.status)}</p>
+                  <p className="text-lg font-bold">Emergency Rescue in Progress</p>
+                  <p className="text-sm opacity-90">Status: {getStatusText(activeJob.status)}</p>
                 </div>
               </div>
               {activeJob.garageId && (
-                <div className="text-right text-sm">
+                <div className="text-left md:text-right">
                   <p className="font-medium">Assigned Garage</p>
-                  <p className="text-xs opacity-90">
+                  <p className="text-sm opacity-90">
                     {typeof activeJob.garageId === 'object' ? activeJob.garageId.businessName : 'Garage Assigned'}
                   </p>
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Map Section - Shows during active job */}
+      {activeJob && activeJob.status !== 'completed' && userLocation && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-white rounded-xl shadow-lg p-4">
+            <div className="mb-3 flex justify-between items-center">
+              <h3 className="font-semibold text-gray-900">Live Tracking</h3>
+              {garageLocation && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
+                  🚗 Garage en route
+                </span>
+              )}
+            </div>
+            <LiveMap
+              clientLocation={userLocation}
+              garageLocation={garageLocation}
+              isActive={true}
+            />
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              {garageLocation 
+                ? '📍 Garage is on the move - tracking in real-time' 
+                : '⏳ Waiting for garage to start moving...'}
+            </p>
           </div>
         </div>
       )}
@@ -221,7 +264,7 @@ const ClientDashboard = () => {
                   </span>
                 </p>
                 <p className="text-gray-500 text-sm mt-4">
-                  Your request is being processed. Please wait for assistance.
+                  Your request is being processed. You can track the garage's location on the map above.
                 </p>
                 <button
                   onClick={() => window.location.href = '/history'}
@@ -348,7 +391,7 @@ const ClientDashboard = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{garage.address}</p>
-                        <p className="text-sm text-gray-600"> {garage.businessPhone}</p>
+                        <p className="text-sm text-gray-600">📞 {garage.businessPhone}</p>
                         <div className="flex gap-2 mt-2">
                           {garage.services?.slice(0, 3).map((service, idx) => (
                             <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
