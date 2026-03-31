@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
+import { playNotificationAudio } from '../utils/playNotification';
 
 const GarageDashboard = () => {
   const { user, garage: garageProfile, logout } = useAuth();
@@ -14,7 +15,6 @@ const GarageDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newJobAlert, setNewJobAlert] = useState(null);
-  const audioRef = useRef(null);
 
   // Load data
   useEffect(() => {
@@ -34,10 +34,8 @@ const GarageDashboard = () => {
       console.log('New job alert received:', job);
       setNewJobAlert(job);
       
-      // Play notification sound if available
-      if (audioRef.current) {
-        audioRef.current.play().catch(e => console.log('Audio play failed:', e));
-      }
+      // Play notification sound
+      playNotificationAudio();
       
       // Refresh available jobs
       loadAvailableJobs();
@@ -208,9 +206,6 @@ const GarageDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Audio element for notifications */}
-      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
-      
       {/* Header */}
       <div className="bg-green-600 text-white sticky top-0 z-10 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
