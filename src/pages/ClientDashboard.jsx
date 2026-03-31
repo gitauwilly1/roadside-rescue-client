@@ -23,6 +23,7 @@ const ClientDashboard = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [garageLocation, setGarageLocation] = useState(null);
+  const [hasLoadedLocation, setHasLoadedLocation] = useState(false);
 
   const { location: userLocation, getCurrentPosition } = useGeoLocation({ watch: true });
   const { jobs, activeJob, loadJobs } = useJobTracking('client', socket, isConnected);
@@ -46,11 +47,12 @@ const ClientDashboard = () => {
   }, [routerLocation.pathname]);
 
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation && !hasLoadedLocation) {
       setFieldValue('clientLocation', { coordinates: userLocation.coordinates });
       loadNearbyGarages(userLocation.latitude, userLocation.longitude);
+      setHasLoadedLocation(true);
     }
-  }, [userLocation]);
+  }, [userLocation, hasLoadedLocation]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -194,7 +196,7 @@ const ClientDashboard = () => {
               <h3 className="font-semibold text-gray-900">Live Tracking</h3>
               {garageLocation && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
-                  🚗 Garage en route
+                   Garage en route
                 </span>
               )}
             </div>
@@ -205,8 +207,8 @@ const ClientDashboard = () => {
             />
             <p className="text-xs text-gray-500 mt-3 text-center">
               {garageLocation 
-                ? '📍 Garage is on the move - tracking in real-time' 
-                : '⏳ Waiting for garage to start moving...'}
+                ? ' Garage is on the move - tracking in real-time' 
+                : ' Waiting for garage to start moving...'}
             </p>
           </div>
         </div>
@@ -391,7 +393,7 @@ const ClientDashboard = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{garage.address}</p>
-                        <p className="text-sm text-gray-600">📞 {garage.businessPhone}</p>
+                        <p className="text-sm text-gray-600"> {garage.businessPhone}</p>
                         <div className="flex gap-2 mt-2">
                           {garage.services?.slice(0, 3).map((service, idx) => (
                             <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
