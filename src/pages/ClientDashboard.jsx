@@ -5,7 +5,7 @@ import { client } from '../services/api';
 import ReviewModal from '../components/common/ReviewModal';
 
 const ClientDashboard = ({ initialTab = 'request' }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { socket, isConnected } = useSocket();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [jobs, setJobs] = useState([]);
@@ -18,7 +18,6 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   
-  // Job request form state
   const [jobForm, setJobForm] = useState({
     serviceType: 'tire_change',
     clientAddress: '',
@@ -28,7 +27,6 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
     }
   });
 
-  // Load user location
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -40,22 +38,17 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
           }));
           loadNearbyGarages(latitude, longitude);
         },
-        (error) => {
-          console.error('Geolocation error:', error);
-          loadNearbyGarages(-1.2921, 36.8219);
-        }
+        () => loadNearbyGarages(-1.2921, 36.8219)
       );
     } else {
       loadNearbyGarages(-1.2921, 36.8219);
     }
   }, []);
 
-  // Load job history
   useEffect(() => {
     loadJobs();
   }, []);
 
-  // Socket event listeners
   useEffect(() => {
     if (!socket || !isConnected) return;
 
@@ -102,7 +95,6 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
   const loadJobs = async () => {
     try {
       const response = await client.getJobs({ limit: 10 });
-      // Backend now returns hasReview field directly
       setJobs(response.data.jobs);
       
       const active = response.data.jobs.find(job => 
@@ -169,7 +161,7 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
   const handleReviewSubmitted = () => {
     setSuccess('Thank you for your review!');
     setTimeout(() => setSuccess(''), 3000);
-    loadJobs(); // Reload to update review status
+    loadJobs();
   };
 
   const openReviewModal = (job) => {
@@ -196,11 +188,11 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
   const getStatusBadge = (status) => {
     const badges = {
       pending: 'bg-yellow-100 text-yellow-800',
-      accepted: 'bg-blue-100 text-blue-800',
-      en_route: 'bg-purple-100 text-purple-800',
-      in_progress: 'bg-indigo-100 text-indigo-800',
+      accepted: 'bg-red-100 text-red-800',
+      en_route: 'bg-orange-100 text-orange-800',
+      in_progress: 'bg-blue-100 text-blue-800',
       completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      cancelled: 'bg-gray-100 text-gray-800'
     };
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
@@ -230,8 +222,7 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Review Modal */}
+    <div className="min-h-screen bg-gray-50">
       {selectedJobForReview && (
         <ReviewModal
           job={selectedJobForReview}
@@ -241,122 +232,118 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
         />
       )}
 
-      {/* Header */}
-      <div className="bg-blue-600 text-white sticky top-0 z-10 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold">Roadside Rescue</h1>
-              <p className="text-sm text-blue-100">Welcome, {user?.fullName}</p>
-              {isConnected && <p className="text-xs text-blue-200">🔌 Real-time connected</p>}
-            </div>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded-lg text-sm font-medium transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Active Job Tracking Card */}
+      {/* Active Job Emergency Banner */}
       {activeJob && activeJob.status !== 'completed' && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white">
-            <div className="flex items-center justify-between">
+        <div className="bg-gradient-primary text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{getStatusIcon(activeJob.status)}</span>
+                <div className="animate-pulse">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
                 <div>
-                  <p className="text-sm opacity-90">Current Rescue Status</p>
-                  <p className="font-bold text-lg">{getStatusText(activeJob.status)}</p>
+                  <p className="text-sm font-medium">Emergency Rescue in Progress</p>
+                  <p className="text-xs opacity-90">Status: {getStatusText(activeJob.status)}</p>
                 </div>
               </div>
               {activeJob.garageId && (
-                <div className="text-right">
-                  <p className="text-sm opacity-90">Assigned Garage</p>
-                  <p className="font-medium">{typeof activeJob.garageId === 'object' ? activeJob.garageId.businessName : 'Garage Assigned'}</p>
+                <div className="text-right text-sm">
+                  <p className="font-medium">Assigned Garage</p>
+                  <p className="text-xs opacity-90">
+                    {typeof activeJob.garageId === 'object' ? activeJob.garageId.businessName : 'Garage Assigned'}
+                  </p>
                 </div>
               )}
             </div>
-            {activeJob.status === 'en_route' && garageLocation && (
-              <div className="mt-3 pt-3 border-t border-blue-400">
-                <p className="text-sm">🚗 Garage is en route to your location</p>
-              </div>
-            )}
           </div>
         </div>
       )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Status and Connection */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.fullName?.split(' ')[0]}!</h1>
+            <p className="text-sm text-gray-500">Get emergency roadside assistance instantly</p>
+          </div>
+          {isConnected && (
+            <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Real-time connected</span>
+            </div>
+          )}
+        </div>
+
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 border-b border-gray-200">
           <button
             onClick={() => setActiveTab('request')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
               activeTab === 'request'
-                ? 'bg-white text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
-            Request Rescue
+            🚨 Request Rescue
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
               activeTab === 'history'
-                ? 'bg-white text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
-            My History ({jobs.filter(j => j.status === 'completed').length} completed)
+            📋 My History ({jobs.filter(j => j.status === 'completed').length})
           </button>
           <button
             onClick={() => setActiveTab('garages')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
               activeTab === 'garages'
-                ? 'bg-white text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
-            Nearby Garages
+            🏪 Nearby Garages
           </button>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+          <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in">
+            <p className="text-sm">{error}</p>
           </div>
         )}
         
         {success && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-            {success}
+          <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in">
+            <p className="text-sm">{success}</p>
           </div>
         )}
 
         {/* Request Rescue Tab */}
         {activeTab === 'request' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Request Rescue</h2>
+          <div className="bg-white rounded-xl shadow-lg p-6 card-hover">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Emergency Rescue Request</h2>
             
             {activeJob && activeJob.status !== 'completed' ? (
               <div className="text-center py-8">
-                <div className="text-6xl mb-4">{getStatusIcon(activeJob.status)}</div>
-                <h3 className="text-lg font-semibold text-gray-900">You have an active rescue request</h3>
+                <div className="text-6xl mb-4 animate-pulse">{getStatusIcon(activeJob.status)}</div>
+                <h3 className="text-lg font-semibold text-gray-900">Active Rescue Request</h3>
                 <p className="text-gray-600 mt-2">
-                  Status: <span className={`font-medium ${activeJob.status === 'pending' ? 'text-yellow-600' : 'text-blue-600'}`}>
+                  Status: <span className={`font-medium ${activeJob.status === 'pending' ? 'text-yellow-600' : 'text-red-600'}`}>
                     {getStatusText(activeJob.status)}
                   </span>
                 </p>
                 <p className="text-gray-500 text-sm mt-4">
-                  You can only request a new rescue after your current request is completed or cancelled.
+                  Your request is being processed. Please wait for assistance.
                 </p>
                 <button
                   onClick={() => setActiveTab('history')}
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="mt-4 btn-outline"
                 >
                   View Active Request
                 </button>
@@ -371,7 +358,7 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
                     name="serviceType"
                     value={jobForm.serviceType}
                     onChange={handleJobFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="input-primary"
                     required
                   >
                     <option value="tire_change">🔧 Tire Change - KES 1,500 - 2,500</option>
@@ -392,11 +379,11 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
                     value={jobForm.clientAddress}
                     onChange={handleJobFormChange}
                     placeholder="e.g., Mombasa Road, Near Gate A, Nairobi"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="input-primary"
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    We'll use your device location to find nearby garages
+                    📍 We'll use your device location to find nearby garages
                   </p>
                 </div>
 
@@ -410,27 +397,39 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
                     onChange={handleJobFormChange}
                     rows="3"
                     placeholder="e.g., Car is a white Toyota Fielder, near the Total petrol station"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="input-primary resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full btn-primary flex items-center justify-center gap-2 py-3"
                 >
-                  {isLoading ? 'Requesting...' : 'Request Rescue Now'}
+                  {isLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Requesting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>Request Rescue Now</span>
+                    </>
+                  )}
                 </button>
               </form>
             )}
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-medium text-blue-800 mb-2">💡 Quick Tips</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Make sure your phone's location is enabled for faster response</li>
+            <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
+              <h3 className="font-medium text-red-800 mb-2">🚨 Emergency Tips</h3>
+              <ul className="text-sm text-red-700 space-y-1">
+                <li>• Stay in a safe location away from traffic</li>
+                <li>• Turn on your hazard lights</li>
+                <li>• Keep your phone location enabled for faster response</li>
                 <li>• A nearby garage will accept your request within minutes</li>
-                <li>• You'll receive real-time updates on the driver's location</li>
-                <li>• Payment is made directly to the garage after service</li>
               </ul>
             </div>
           </div>
@@ -474,13 +473,12 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
                       <p className="text-sm text-gray-500 mt-2 italic">"{job.notes}"</p>
                     )}
                     
-                    {/* Review Button for Completed Jobs */}
                     {job.status === 'completed' && !job.hasReview && (
                       <button
                         onClick={() => openReviewModal(job)}
-                        className="mt-3 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-sm hover:bg-yellow-200 transition-colors flex items-center gap-1"
+                        className="mt-3 px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 transition-colors flex items-center gap-1"
                       >
-                        ⭐ Leave a Review
+                        ⭐ Rate Your Experience
                       </button>
                     )}
                     
@@ -499,7 +497,7 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
         {/* Nearby Garages Tab */}
         {activeTab === 'garages' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Nearby Garages</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Nearby Verified Garages</h2>
             
             {nearbyGarages.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -509,14 +507,19 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
             ) : (
               <div className="space-y-3">
                 {nearbyGarages.map((garage) => (
-                  <div key={garage._id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div key={garage._id} className="border rounded-lg p-4 hover:shadow-md transition-all hover:border-red-200">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-gray-900">{garage.businessName}</h3>
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
                             {garage.distance} km
                           </span>
+                          {garage.isOnline && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              Online
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{garage.address}</p>
                         <p className="text-sm text-gray-600">📞 {garage.businessPhone}</p>
@@ -534,11 +537,9 @@ const ClientDashboard = ({ initialTab = 'request' }) => {
                           <span className="font-medium">{garage.rating || 'New'}</span>
                         </div>
                         <p className="text-xs text-gray-500">{garage.totalReviews || 0} reviews</p>
-                        {garage.isOnline && (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full mt-2 inline-block">
-                            Online
-                          </span>
-                        )}
+                        <button className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium">
+                          Contact
+                        </button>
                       </div>
                     </div>
                   </div>
