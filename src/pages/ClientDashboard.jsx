@@ -370,7 +370,7 @@ const ClientDashboard = () => {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    📍 We'll use your device location to find nearby garages
+                     We'll use your device location to find nearby garages
                   </p>
                 </div>
 
