@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { client } from '../services/api';
+import ReviewModal from '../components/common/ReviewModal';
 
 const ClientDashboard = () => {
   const { user, logout } = useAuth();
@@ -14,6 +15,8 @@ const ClientDashboard = () => {
   const [success, setSuccess] = useState('');
   const [activeJob, setActiveJob] = useState(null);
   const [garageLocation, setGarageLocation] = useState(null);
+  const [selectedJobForReview, setSelectedJobForReview] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   
   // Job request form state
   const [jobForm, setJobForm] = useState({
@@ -52,26 +55,22 @@ const ClientDashboard = () => {
     loadJobs();
   }, []);
 
-  // Socket event listeners for real-time job updates
+  // Socket event listeners
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    // Listen for job status updates
     socket.on('job_status_update', (updatedJob) => {
       console.log('Job status update received:', updatedJob);
       
-      // Update jobs list
       setJobs(prevJobs => 
         prevJobs.map(job => 
           job._id === updatedJob._id ? { ...job, ...updatedJob } : job
         )
       );
       
-      // Update active job if it's the one being tracked
       if (activeJob && activeJob._id === updatedJob._id) {
         setActiveJob(updatedJob);
         
-        // Show status change notification
         const statusMessages = {
           accepted: '✅ Your rescue request has been accepted! A garage is on their way.',
           en_route: '🚗 The garage is en route to your location!',
@@ -88,7 +87,6 @@ const ClientDashboard = () => {
       loadJobs();
     });
 
-    // Listen for garage location updates (for live tracking)
     socket.on('garage_location_update', ({ jobId, location }) => {
       if (activeJob && activeJob._id === jobId) {
         setGarageLocation(location);
@@ -104,15 +102,30 @@ const ClientDashboard = () => {
   const loadJobs = async () => {
     try {
       const response = await client.getJobs({ limit: 10 });
-      setJobs(response.data.jobs);
       
-      // Check for active job (pending, accepted, en_route, in_progress)
-      const active = response.data.jobs.find(job => 
+      // Check if jobs have reviews
+      const jobsWithReviewStatus = await Promise.all(
+        response.data.jobs.map(async (job) => {
+          if (job.status === 'completed') {
+            try {
+              // Check if review exists (we'll need a new endpoint or check in job)
+              // For now, we'll assume no review by default and let user submit
+              return { ...job, hasReview: false };
+            } catch {
+              return { ...job, hasReview: false };
+            }
+          }
+          return { ...job, hasReview: false };
+        })
+      );
+      
+      setJobs(jobsWithReviewStatus);
+      
+      const active = jobsWithReviewStatus.find(job => 
         ['pending', 'accepted', 'en_route', 'in_progress'].includes(job.status)
       );
       if (active) {
         setActiveJob(active);
-        // Join room for this job to receive real-time updates
         if (socket && isConnected) {
           socket.emit('join_job_room', active._id);
         }
@@ -157,7 +170,6 @@ const ClientDashboard = () => {
       setJobForm(prev => ({ ...prev, notes: '' }));
       loadJobs();
       
-      // Emit new job event for real-time alerts
       if (socket && isConnected) {
         socket.emit('new_job', response.data.job);
       }
@@ -168,6 +180,22 @@ const ClientDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleReviewSubmitted = () => {
+    setSuccess('Thank you for your review!');
+    setTimeout(() => setSuccess(''), 3000);
+    loadJobs();
+  };
+
+  const openReviewModal = (job) => {
+    setSelectedJobForReview(job);
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedJobForReview(null);
   };
 
   const getServiceName = (serviceType) => {
@@ -219,6 +247,16 @@ const ClientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Review Modal */}
+      {selectedJobForReview && (
+        <ReviewModal
+          job={selectedJobForReview}
+          isOpen={showReviewModal}
+          onClose={closeReviewModal}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
+
       {/* Header */}
       <div className="bg-blue-600 text-white sticky top-0 z-10 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -402,7 +440,6 @@ const ClientDashboard = () => {
               </form>
             )}
 
-            {/* Quick Tips */}
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h3 className="font-medium text-blue-800 mb-2">💡 Quick Tips</h3>
               <ul className="text-sm text-blue-700 space-y-1">
@@ -453,14 +490,20 @@ const ClientDashboard = () => {
                       <p className="text-sm text-gray-500 mt-2 italic">"{job.notes}"</p>
                     )}
                     
-                    {/* Show review button for completed jobs without review */}
+                    {/* Review Button for Completed Jobs */}
                     {job.status === 'completed' && !job.hasReview && (
                       <button
-                        className="mt-3 px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-sm hover:bg-yellow-200"
-                        onClick={() => alert('Review feature coming soon!')}
+                        onClick={() => openReviewModal(job)}
+                        className="mt-3 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-sm hover:bg-yellow-200 transition-colors flex items-center gap-1"
                       >
                         ⭐ Leave a Review
                       </button>
+                    )}
+                    
+                    {job.status === 'completed' && job.hasReview && (
+                      <div className="mt-3 px-3 py-1 bg-gray-100 text-gray-500 rounded-lg text-sm inline-flex items-center gap-1">
+                        ✅ Review Submitted
+                      </div>
                     )}
                   </div>
                 ))}
