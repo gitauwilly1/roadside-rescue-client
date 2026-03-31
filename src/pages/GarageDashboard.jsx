@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation as useRouterLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
 import useJobTracking from '../hooks/useJobTracking';
-import useForm from '../hooks/useForm';
 import JobAlert from '../components/garage/JobAlert';
 import GarageJobCard from '../components/garage/GarageJobCard';
 import OnlineToggle from '../components/garage/OnlineToggle';
@@ -12,7 +11,7 @@ import OnlineToggle from '../components/garage/OnlineToggle';
 const GarageDashboard = () => {
   const { user, garage: garageProfile } = useAuth();
   const { socket, isConnected } = useSocket();
-  const location = useLocation();
+  const routerLocation = useRouterLocation();
   const [activeSection, setActiveSection] = useState('available');
   const [availableJobs, setAvailableJobs] = useState([]);
   const [isOnline, setIsOnline] = useState(false);
@@ -24,13 +23,13 @@ const GarageDashboard = () => {
   const { jobs: myJobs, loadJobs: loadMyJobs } = useJobTracking('garage', socket, isConnected);
 
   useEffect(() => {
-    const path = location.pathname;
+    const path = routerLocation.pathname;
     if (path === '/my-jobs') {
       setActiveSection('myjobs');
     } else {
       setActiveSection('available');
     }
-  }, [location.pathname]);
+  }, [routerLocation.pathname]);
 
   useEffect(() => {
     loadAvailableJobs();
@@ -40,7 +39,6 @@ const GarageDashboard = () => {
     }
   }, []);
 
-  // Socket listeners for real-time alerts
   useEffect(() => {
     if (!socket || !isConnected || !isOnline) return;
 
