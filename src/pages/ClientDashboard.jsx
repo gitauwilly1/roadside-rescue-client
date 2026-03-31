@@ -280,9 +280,9 @@ const ClientDashboard = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {activeSection === 'request' && '🚨 Emergency Rescue Request'}
-              {activeSection === 'history' && '📋 My Rescue History'}
-              {activeSection === 'garages' && '🏪 Nearby Verified Garages'}
+              {activeSection === 'request' && ' Emergency Rescue Request'}
+              {activeSection === 'history' && ' My Rescue History'}
+              {activeSection === 'garages' && ' Nearby Verified Garages'}
             </h1>
             <p className="text-sm text-gray-500">
               {activeSection === 'request' && 'Get immediate roadside assistance'}
@@ -453,7 +453,7 @@ const ClientDashboard = () => {
                     <p className="text-sm text-gray-600 mb-1">📍 {job.clientAddress}</p>
                     {job.garageId && (
                       <p className="text-sm text-gray-600">
-                        🏪 Garage: {typeof job.garageId === 'object' ? job.garageId.businessName : 'Assigned'}
+                         Garage: {typeof job.garageId === 'object' ? job.garageId.businessName : 'Assigned'}
                       </p>
                     )}
                     {job.notes && (
@@ -465,13 +465,13 @@ const ClientDashboard = () => {
                         onClick={() => openReviewModal(job)}
                         className="mt-3 px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 transition-colors flex items-center gap-1"
                       >
-                        ⭐ Rate Your Experience
+                         Rate Your Experience
                       </button>
                     )}
                     
                     {job.status === 'completed' && job.hasReview && (
                       <div className="mt-3 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm inline-flex items-center gap-1">
-                        ✅ Review Submitted
+                         Review Submitted
                       </div>
                     )}
                   </div>
