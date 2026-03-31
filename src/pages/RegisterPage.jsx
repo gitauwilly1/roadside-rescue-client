@@ -18,7 +18,7 @@ const RegisterPage = () => {
     businessPhone: '',
     address: '',
     location: {
-      coordinates: [36.8219, -1.2921] // Default Nairobi coordinates
+      coordinates: [36.8219, -1.2921]
     },
     services: []
   });
@@ -48,7 +48,6 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -83,14 +82,39 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 py-12">
-      <div className="max-w-2xl w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-soft py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl animate-fade-in">
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex justify-center">
+            <div className="h-16 w-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-lg emergency-pulse">
+              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="mt-6 text-3xl font-extrabold text-gradient">
+            Create Account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Join Roadside Rescue today
+          </p>
+        </div>
 
         {/* Registration Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm">{error}</p>
+                </div>
+              </div>
             </div>
           )}
           
@@ -105,8 +129,8 @@ const RegisterPage = () => {
                 onClick={() => handleRoleChange('client')}
                 className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all ${
                   formData.role === 'client'
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
+                    : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
                 }`}
               >
                 🚗 Stranded Driver
@@ -116,8 +140,8 @@ const RegisterPage = () => {
                 onClick={() => handleRoleChange('garage')}
                 className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all ${
                   formData.role === 'garage'
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
+                    : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
                 }`}
               >
                 🔧 Garage Owner
@@ -137,7 +161,7 @@ const RegisterPage = () => {
                 type="text"
                 name="fullName"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="input-primary"
                 placeholder="John Doe"
                 value={formData.fullName}
                 onChange={handleChange}
@@ -152,7 +176,7 @@ const RegisterPage = () => {
                 type="tel"
                 name="phone"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="input-primary"
                 placeholder="0712345678"
                 value={formData.phone}
                 onChange={handleChange}
@@ -167,7 +191,7 @@ const RegisterPage = () => {
                 type="email"
                 name="email"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="input-primary"
                 placeholder="john@example.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -182,7 +206,7 @@ const RegisterPage = () => {
                 type="password"
                 name="password"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="input-primary"
                 placeholder="Minimum 6 characters"
                 value={formData.password}
                 onChange={handleChange}
@@ -197,7 +221,7 @@ const RegisterPage = () => {
                 type="password"
                 name="confirmPassword"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="input-primary"
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -207,7 +231,7 @@ const RegisterPage = () => {
 
           {/* Garage Business Details (conditional) */}
           {showBusinessFields && (
-            <div className="space-y-4 border-t pt-4">
+            <div className="space-y-4 border-t border-gray-200 pt-4 animate-fade-in">
               <h3 className="text-lg font-medium text-gray-900">Business Information</h3>
               
               <div>
@@ -218,7 +242,7 @@ const RegisterPage = () => {
                   type="text"
                   name="businessName"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="input-primary"
                   placeholder="Nairobi Quick Tow"
                   value={businessDetails.businessName}
                   onChange={handleBusinessChange}
@@ -233,7 +257,7 @@ const RegisterPage = () => {
                   type="text"
                   name="licenseNumber"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="input-primary"
                   placeholder="TOW12345"
                   value={businessDetails.licenseNumber}
                   onChange={handleBusinessChange}
@@ -248,7 +272,7 @@ const RegisterPage = () => {
                   type="tel"
                   name="businessPhone"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="input-primary"
                   placeholder="0723456789"
                   value={businessDetails.businessPhone}
                   onChange={handleBusinessChange}
@@ -263,7 +287,7 @@ const RegisterPage = () => {
                   type="text"
                   name="address"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="input-primary"
                   placeholder="Mombasa Road, Nairobi"
                   value={businessDetails.address}
                   onChange={handleBusinessChange}
@@ -272,27 +296,30 @@ const RegisterPage = () => {
             </div>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Creating Account...</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </div>
+                <span>Create Account</span>
+              </>
+            )}
+          </button>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link to="/login" className="font-medium text-red-600 hover:text-red-500 transition-colors">
                 Sign in here
               </Link>
             </p>
