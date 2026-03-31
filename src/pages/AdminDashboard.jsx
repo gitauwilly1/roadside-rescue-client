@@ -14,7 +14,6 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Load data based on active tab
   useEffect(() => {
     loadStats();
     loadUsers();
@@ -101,7 +100,7 @@ const AdminDashboard = () => {
   const getRoleBadge = (role) => {
     const badges = {
       admin: 'bg-purple-100 text-purple-800',
-      garage: 'bg-green-100 text-green-800',
+      garage: 'bg-red-100 text-red-800',
       client: 'bg-blue-100 text-blue-800'
     };
     return badges[role] || 'bg-gray-100 text-gray-800';
@@ -110,28 +109,28 @@ const AdminDashboard = () => {
   const getStatusBadge = (status) => {
     const badges = {
       pending: 'bg-yellow-100 text-yellow-800',
-      accepted: 'bg-blue-100 text-blue-800',
-      en_route: 'bg-purple-100 text-purple-800',
-      in_progress: 'bg-indigo-100 text-indigo-800',
+      accepted: 'bg-red-100 text-red-800',
+      en_route: 'bg-orange-100 text-orange-800',
+      in_progress: 'bg-blue-100 text-blue-800',
       completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      cancelled: 'bg-gray-100 text-gray-800'
     };
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <div className="bg-purple-600 text-white sticky top-0 z-10 shadow-lg">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Banner */}
+      <div className="bg-gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Roadside Rescue - Admin</h1>
-              <p className="text-sm text-purple-100">Welcome, {user?.fullName}</p>
+              <h1 className="text-2xl font-bold">Admin Control Panel</h1>
+              <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
             </div>
             <button
               onClick={logout}
-              className="px-4 py-2 bg-purple-700 hover:bg-purple-800 rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-all"
             >
               Logout
             </button>
@@ -143,13 +142,13 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Alerts */}
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
         
         {success && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+          <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg">
             {success}
           </div>
         )}
@@ -158,50 +157,50 @@ const AdminDashboard = () => {
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('stats')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
               activeTab === 'stats'
-                ? 'bg-white text-purple-600 border-b-2 border-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
             📊 Dashboard Stats
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
               activeTab === 'users'
-                ? 'bg-white text-purple-600 border-b-2 border-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
             👥 Users ({users.length})
           </button>
           <button
             onClick={() => setActiveTab('garages')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
               activeTab === 'garages'
-                ? 'bg-white text-purple-600 border-b-2 border-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
             🏪 Garages ({garages.length})
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
               activeTab === 'jobs'
-                ? 'bg-white text-purple-600 border-b-2 border-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
             📋 Jobs ({jobs.length})
           </button>
           <button
             onClick={() => setActiveTab('vehicles')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
               activeTab === 'vehicles'
-                ? 'bg-white text-purple-600 border-b-2 border-purple-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
             🚗 Vehicles ({vehicles.length})
@@ -211,7 +210,7 @@ const AdminDashboard = () => {
         {/* Stats Tab */}
         {activeTab === 'stats' && stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-500 text-sm">Total Users</p>
@@ -225,7 +224,7 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-500 text-sm">Garages</p>
@@ -239,7 +238,7 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-500 text-sm">Total Jobs</p>
@@ -256,7 +255,7 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-500 text-sm">Average Rating</p>
@@ -306,7 +305,7 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => toggleUserStatus(userItem._id, userItem.isActive)}
                           disabled={isLoading || userItem.role === 'admin'}
-                          className={`px-3 py-1 rounded text-xs font-medium ${
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
                             userItem.isActive 
                               ? 'bg-red-100 text-red-700 hover:bg-red-200' 
                               : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -358,7 +357,7 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => verifyGarage(garageItem._id, garageItem.isVerified)}
                           disabled={isLoading}
-                          className={`px-3 py-1 rounded text-xs font-medium ${
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
                             garageItem.isVerified 
                               ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
                               : 'bg-green-100 text-green-700 hover:bg-green-200'
