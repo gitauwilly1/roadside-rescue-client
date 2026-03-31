@@ -1,21 +1,15 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const { user, garage, logout, isAuthenticated, isClient, isGarage, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const getDashboardLink = () => {
-    if (isClient) return '/';
-    if (isGarage) return '/';
-    if (isAdmin) return '/';
-    return '/login';
   };
 
   const getBusinessName = () => {
@@ -23,12 +17,24 @@ const Navbar = () => {
     return user?.fullName || 'User';
   };
 
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const handleClientNav = (tab) => {
+    navigate('/client-dashboard', { state: { initialTab: tab } });
+  };
+
+  const handleGarageNav = (tab) => {
+    navigate('/garage-dashboard', { state: { initialTab: tab } });
+  };
+
   return (
     <nav className="bg-gradient-primary text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to={getDashboardLink()} className="flex items-center space-x-2 group">
+          <Link to="/" className="flex items-center space-x-2 group">
             <div className="h-9 w-9 bg-white rounded-full flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
               <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -38,27 +44,76 @@ const Navbar = () => {
             <span className="font-bold text-xl tracking-tight">Roadside Rescue</span>
           </Link>
 
+          {/* Navigation Links - Role-based */}
           <div className="hidden md:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
                 {isClient && (
                   <>
-                    <Link to="/" className="text-white/90 hover:text-white transition-colors duration-200">Request Rescue</Link>
-                    <Link to="/history" className="text-white/90 hover:text-white transition-colors duration-200">My History</Link>
-                    <Link to="/garages" className="text-white/90 hover:text-white transition-colors duration-200">Nearby Garages</Link>
+                    <Link 
+                      to="/client-dashboard" 
+                      state={{ initialTab: 'request' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/client-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      🚨 Request Rescue
+                    </Link>
+                    <Link 
+                      to="/client-dashboard" 
+                      state={{ initialTab: 'history' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/client-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      📋 My History
+                    </Link>
+                    <Link 
+                      to="/client-dashboard" 
+                      state={{ initialTab: 'garages' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/client-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      🏪 Nearby Garages
+                    </Link>
                   </>
                 )}
                 {isGarage && (
                   <>
-                    <Link to="/" className="text-white/90 hover:text-white transition-colors duration-200">Available Jobs</Link>
-                    <Link to="/my-jobs" className="text-white/90 hover:text-white transition-colors duration-200">My Jobs</Link>
+                    <Link 
+                      to="/garage-dashboard" 
+                      state={{ initialTab: 'available' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/garage-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      🚨 Available Jobs
+                    </Link>
+                    <Link 
+                      to="/garage-dashboard" 
+                      state={{ initialTab: 'myjobs' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/garage-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      📋 My Jobs
+                    </Link>
                   </>
                 )}
                 {isAdmin && (
                   <>
-                    <Link to="/" className="text-white/90 hover:text-white transition-colors duration-200">Dashboard</Link>
-                    <Link to="/users" className="text-white/90 hover:text-white transition-colors duration-200">Users</Link>
-                    <Link to="/garages" className="text-white/90 hover:text-white transition-colors duration-200">Garages</Link>
+                    <Link 
+                      to="/admin-dashboard" 
+                      state={{ initialTab: 'stats' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/admin-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      📊 Dashboard
+                    </Link>
+                    <Link 
+                      to="/admin-dashboard" 
+                      state={{ initialTab: 'users' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/admin-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      👥 Users
+                    </Link>
+                    <Link 
+                      to="/admin-dashboard" 
+                      state={{ initialTab: 'garages' }}
+                      className={`text-white/90 hover:text-white transition-colors duration-200 ${isActive('/admin-dashboard') ? 'border-b-2 border-white' : ''}`}
+                    >
+                      🏪 Garages
+                    </Link>
                   </>
                 )}
               </>
