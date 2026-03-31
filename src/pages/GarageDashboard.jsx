@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
 import { playNotificationAudio } from '../utils/playNotification';
 
-const GarageDashboard = ({ initialTab = 'available' }) => {
-  const { user, garage: garageProfile, logout } = useAuth();
+const GarageDashboard = () => {
+  const { user, garage: garageProfile } = useAuth();
   const { socket, isConnected } = useSocket();
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState('available');
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [isOnline, setIsOnline] = useState(false);
@@ -15,6 +17,15 @@ const GarageDashboard = ({ initialTab = 'available' }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newJobAlert, setNewJobAlert] = useState(null);
+
+  // Set active section based on URL path
+  useEffect(() => {
+    if (location.pathname === '/my-jobs') {
+      setActiveSection('myjobs');
+    } else {
+      setActiveSection('available');
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     loadAvailableJobs();
@@ -198,7 +209,9 @@ const GarageDashboard = ({ initialTab = 'available' }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Garage Dashboard</h1>
+              <h1 className="text-2xl font-bold">
+                {activeSection === 'available' ? '🚨 Emergency Rescue Requests' : '📋 My Assigned Jobs'}
+              </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
             <div className="flex items-center gap-4">
@@ -219,12 +232,6 @@ const GarageDashboard = ({ initialTab = 'available' }) => {
                   }`}
                 >
                   {isOnline ? '🟢 Online' : '⚫ Offline'}
-                </button>
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-all"
-                >
-                  Logout
                 </button>
               </div>
             </div>
@@ -252,7 +259,7 @@ const GarageDashboard = ({ initialTab = 'available' }) => {
                 <button
                   onClick={() => {
                     setNewJobAlert(null);
-                    setActiveTab('available');
+                    window.location.href = '/';
                   }}
                   className="mt-2 text-xs font-medium text-red-700 hover:text-red-900 underline"
                 >
@@ -302,33 +309,8 @@ const GarageDashboard = ({ initialTab = 'available' }) => {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('available')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
-              activeTab === 'available'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            🚨 Available Jobs ({availableJobs.length})
-            {newJobAlert && <span className="ml-2 w-2 h-2 bg-red-500 rounded-full inline-block animate-pulse"></span>}
-          </button>
-          <button
-            onClick={() => setActiveTab('myjobs')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${
-              activeTab === 'myjobs'
-                ? 'text-red-600 border-b-2 border-red-600 bg-white'
-                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
-          >
-            📋 My Jobs ({myJobs.length})
-          </button>
-        </div>
-
-        {/* Available Jobs Tab */}
-        {activeTab === 'available' && (
+        {/* Available Jobs Section */}
+        {activeSection === 'available' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Emergency Rescue Requests</h2>
             
@@ -383,8 +365,8 @@ const GarageDashboard = ({ initialTab = 'available' }) => {
           </div>
         )}
 
-        {/* My Jobs Tab */}
-        {activeTab === 'myjobs' && (
+        {/* My Jobs Section */}
+        {activeSection === 'myjobs' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">My Assigned Jobs</h2>
             
