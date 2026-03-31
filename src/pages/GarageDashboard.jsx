@@ -20,10 +20,14 @@ const GarageDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newJobAlert, setNewJobAlert] = useState(null);
-  const [activeJobId, setActiveJobId] = useState(null);
   const locationIntervalRef = useRef(null);
+  const isLocationSharingRef = useRef(false);
 
-  const { location: currentLocation, getCurrentPosition } = useGeoLocation({ watch: true });
+  const { location: currentLocation, getCurrentPosition, retry: retryLocation } = useGeoLocation({ 
+    watch: true,
+    enableHighAccuracy: true,
+    timeout: 10000
+  });
   const { jobs: myJobs, loadJobs: loadMyJobs, activeJob } = useJobTracking('garage', socket, isConnected);
 
   useEffect(() => {
@@ -40,6 +44,7 @@ const GarageDashboard = () => {
       setActiveJobId(activeJob._id);
     } else {
       setActiveJobId(null);
+      isLocationSharingRef.current = false;
     }
   }, [activeJob]);
 
@@ -48,18 +53,19 @@ const GarageDashboard = () => {
     if (locationIntervalRef.current) {
       clearInterval(locationIntervalRef.current);
       locationIntervalRef.current = null;
+      isLocationSharingRef.current = false;
     }
 
-    // Start sharing location if garage has an active job that is en route or in progress
-    if (activeJob && socket && isConnected && ['en_route', 'in_progress'].includes(activeJob.status)) {
+    if (activeJob && socket && isConnected && ['en_route', 'in_progress'].includes(activeJob.status) && !isLocationSharingRef.current) {
       console.log('Starting location sharing for job:', activeJob._id);
+      isLocationSharingRef.current = true;
       
       // Get initial location
       getCurrentPosition();
       
       // Share location every 5 seconds
       locationIntervalRef.current = setInterval(() => {
-        if (currentLocation && socket && isConnected) {
+        if (currentLocation && socket && isConnected && activeJob) {
           socket.emit('garage_location_update', {
             jobId: activeJob._id,
             location: {
@@ -69,6 +75,9 @@ const GarageDashboard = () => {
             }
           });
           console.log('Location shared:', currentLocation);
+        } else if (!currentLocation && activeJob) {
+          console.log('No location available, retrying...');
+          retryLocation();
         }
       }, 5000);
     }
@@ -79,17 +88,18 @@ const GarageDashboard = () => {
         locationIntervalRef.current = null;
       }
     };
-  }, [activeJob, socket, isConnected, currentLocation]);
+  }, [activeJob, socket, isConnected, currentLocation, getCurrentPosition, retryLocation]);
 
-  // Load initial data
   useEffect(() => {
     loadAvailableJobs();
     loadMyJobs();
     if (garageProfile) {
       setIsOnline(garageProfile.isOnline);
     }
+    getCurrentPosition();
   }, []);
 
+  // Socket listeners for real-time alerts
   useEffect(() => {
     if (!socket || !isConnected || !isOnline) return;
 
@@ -147,7 +157,7 @@ const GarageDashboard = () => {
   const handleAcceptJob = async (jobId) => {
     setIsLoading(true);
     try {
-      await garage.updateJobStatus(jobId, 'accepted');
+      const response = await garage.updateJobStatus(jobId, 'accepted');
       setSuccess(`Job accepted! You can now navigate to the client.`);
       setNewJobAlert(null);
       
@@ -163,7 +173,8 @@ const GarageDashboard = () => {
       loadMyJobs();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to accept job');
+      console.error('Accept job error:', err);
+      setError(err.response?.data?.error || 'Failed to accept job. Please try again.');
       setTimeout(() => setError(''), 3000);
     } finally {
       setIsLoading(false);
@@ -198,6 +209,7 @@ const GarageDashboard = () => {
       loadMyJobs();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
+      console.error('Status update error:', err);
       setError(err.response?.data?.error || 'Failed to update job status');
       setTimeout(() => setError(''), 3000);
     } finally {
@@ -228,7 +240,7 @@ const GarageDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'available' ? '🚨 Emergency Rescue Requests' : '📋 My Assigned Jobs'}
+                {activeSection === 'available' ? ' Emergency Rescue Requests' : ' My Assigned Jobs'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
@@ -265,7 +277,7 @@ const GarageDashboard = () => {
                 <span className="text-sm font-medium">
                   {activeJob.status === 'accepted' && ' Location sharing will start when you mark as En Route'}
                   {activeJob.status === 'en_route' && ' Location sharing active - Client can see your location'}
-                  {activeJob.status === 'in_progress' && '🔧 Service in progress - Location sharing active'}
+                  {activeJob.status === 'in_progress' && ' Service in progress - Location sharing active'}
                 </span>
               </div>
               <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
