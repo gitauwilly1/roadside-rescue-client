@@ -2,8 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/common/Layout';
-
-// Pages
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ClientDashboard from './pages/ClientDashboard';
@@ -61,10 +59,13 @@ function App() {
             isAuthenticated && isClient ? <ClientDashboard /> : <Navigate to="/" />
           } 
         />
+        
         <Route 
           path="/garages" 
           element={
-            isAuthenticated && isClient ? <ClientDashboard /> : <Navigate to="/" />
+            isAuthenticated && (isClient || isAdmin) ? 
+              (isClient ? <ClientDashboard /> : <AdminDashboard />) : 
+              <Navigate to="/" />
           } 
         />
 
@@ -76,17 +77,33 @@ function App() {
         />
 
         <Route 
+          path="/admin" 
+          element={
+            isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
+          } 
+        />
+        
+        <Route 
           path="/users" 
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
           } 
         />
+        
+        <Route 
+          path="/admin/garages" 
+          element={
+            isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
+          } 
+        />
+        
         <Route 
           path="/jobs" 
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
           } 
         />
+        
         <Route 
           path="/vehicles" 
           element={
