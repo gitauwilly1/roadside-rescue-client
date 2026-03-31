@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { garage } from '../services/api';
@@ -9,6 +9,7 @@ const GarageDashboard = () => {
   const { user, garage: garageProfile } = useAuth();
   const { socket, isConnected } = useSocket();
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('available');
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
@@ -35,26 +36,29 @@ const GarageDashboard = () => {
     }
   }, []);
 
+  // Socket event listeners
   useEffect(() => {
     if (!socket || !isConnected || !isOnline) return;
 
-    socket.on('new_job_alert', (job) => {
+    const onNewJobAlert = (job) => {
       console.log('New job alert received:', job);
       setNewJobAlert(job);
       playNotificationAudio();
       loadAvailableJobs();
       setTimeout(() => setNewJobAlert(null), 10000);
-    });
+    };
 
-    socket.on('job_status_update', (updatedJob) => {
-      console.log('Job status update:', updatedJob);
+    const onJobStatusUpdate = () => {
       loadMyJobs();
       loadAvailableJobs();
-    });
+    };
+
+    socket.on('new_job_alert', onNewJobAlert);
+    socket.on('job_status_update', onJobStatusUpdate);
 
     return () => {
-      socket.off('new_job_alert');
-      socket.off('job_status_update');
+      socket.off('new_job_alert', onNewJobAlert);
+      socket.off('job_status_update', onJobStatusUpdate);
     };
   }, [socket, isConnected, isOnline]);
 
@@ -103,7 +107,7 @@ const GarageDashboard = () => {
     setIsLoading(true);
     try {
       await garage.updateJobStatus(jobId, 'accepted');
-      setSuccess(`Job accepted! You can now navigate to the client.`);
+      setSuccess('Job accepted! You can now navigate to the client.');
       
       if (socket && isConnected) {
         socket.emit('job_accepted', { 
@@ -190,16 +194,16 @@ const GarageDashboard = () => {
   };
 
   const getNextAction = (job) => {
-    switch (job.status) {
-      case 'accepted':
-        return { label: 'Mark as En Route', action: () => updateJobStatus(job._id, 'en_route'), color: 'bg-orange-600 hover:bg-orange-700' };
-      case 'en_route':
-        return { label: 'Start Service', action: () => updateJobStatus(job._id, 'in_progress'), color: 'bg-blue-600 hover:bg-blue-700' };
-      case 'in_progress':
-        return { label: 'Complete Job', action: () => updateJobStatus(job._id, 'completed'), color: 'bg-green-600 hover:bg-green-700' };
-      default:
-        return null;
+    if (job.status === 'accepted') {
+      return { label: 'Mark as En Route', action: () => updateJobStatus(job._id, 'en_route'), color: 'bg-orange-600 hover:bg-orange-700' };
     }
+    if (job.status === 'en_route') {
+      return { label: 'Start Service', action: () => updateJobStatus(job._id, 'in_progress'), color: 'bg-blue-600 hover:bg-blue-700' };
+    }
+    if (job.status === 'in_progress') {
+      return { label: 'Complete Job', action: () => updateJobStatus(job._id, 'completed'), color: 'bg-green-600 hover:bg-green-700' };
+    }
+    return null;
   };
 
   return (
@@ -245,11 +249,9 @@ const GarageDashboard = () => {
           <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-xl max-w-sm">
             <div className="flex">
               <div className="flex-shrink-0">
-                <div className="animate-ring">
-                  <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </div>
+                <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
               </div>
               <div className="ml-3 flex-1">
                 <p className="text-sm font-bold text-red-800">🚨 New Emergency Request!</p>
@@ -259,7 +261,7 @@ const GarageDashboard = () => {
                 <button
                   onClick={() => {
                     setNewJobAlert(null);
-                    window.location.href = '/';
+                    navigate('/');
                   }}
                   className="mt-2 text-xs font-medium text-red-700 hover:text-red-900 underline"
                 >

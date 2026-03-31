@@ -143,11 +143,11 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'stats' && '📊 Admin Dashboard'}
-                {activeSection === 'users' && '👥 User Management'}
-                {activeSection === 'garages' && '🏪 Garage Management'}
-                {activeSection === 'jobs' && '📋 Job Management'}
-                {activeSection === 'vehicles' && '🚗 Vehicle Management'}
+                {activeSection === 'stats' && ' Admin Dashboard'}
+                {activeSection === 'users' && ' User Management'}
+                {activeSection === 'garages' && ' Garage Management'}
+                {activeSection === 'jobs' && ' Job Management'}
+                {activeSection === 'vehicles' && ' Vehicle Management'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
             </div>
