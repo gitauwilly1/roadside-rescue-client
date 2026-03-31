@@ -1,4 +1,3 @@
-// Import the functions you need from the SDKs
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
@@ -46,5 +45,7 @@ export const signOutGoogle = async () => {
     return { success: false, error: error.message };
   }
 };
+
+export { auth };
 
 export default auth;
