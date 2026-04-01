@@ -39,15 +39,7 @@ const GarageDashboard = () => {
     }
   }, [routerLocation.pathname]);
 
-  useEffect(() => {
-    if (activeJob && ['accepted', 'en_route', 'in_progress'].includes(activeJob.status)) {
-      setActiveJobId(activeJob._id);
-    } else {
-      setActiveJobId(null);
-      isLocationSharingRef.current = false;
-    }
-  }, [activeJob]);
-
+  // Start location sharing when garage is en route
   useEffect(() => {
     // Clear existing interval
     if (locationIntervalRef.current) {
@@ -56,6 +48,7 @@ const GarageDashboard = () => {
       isLocationSharingRef.current = false;
     }
 
+    // Start sharing location if garage has an active job that is en route or in progress
     if (activeJob && socket && isConnected && ['en_route', 'in_progress'].includes(activeJob.status) && !isLocationSharingRef.current) {
       console.log('Starting location sharing for job:', activeJob._id);
       isLocationSharingRef.current = true;
