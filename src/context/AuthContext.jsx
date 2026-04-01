@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { auth } from '../services/api';
+import { signOutGoogle } from '../config/firebase';
 
 const AuthContext = createContext(null);
 
@@ -89,12 +90,13 @@ export const AuthProvider = ({ children }) => {
   }
 };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setGarage(null);
-  };
+  const logout = async () => {
+  await signOutGoogle();
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  setUser(null);
+  setGarage(null);
+};
 
   const value = {
     user,
