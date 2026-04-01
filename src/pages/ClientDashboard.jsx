@@ -24,6 +24,7 @@ const ClientDashboard = () => {
   const [error, setError] = useState('');
   const [garageLocation, setGarageLocation] = useState(null);
   const [hasLoadedLocation, setHasLoadedLocation] = useState(false);
+  const [etaInfo, setEtaInfo] = useState(null);
 
   const { location: userLocation, getCurrentPosition } = useGeoLocation({ watch: true });
   const { jobs, activeJob, loadJobs } = useJobTracking('client', socket, isConnected);
@@ -94,11 +95,11 @@ const ClientDashboard = () => {
       setSuccess('Job request created successfully! A nearby garage will respond shortly.');
       setFieldValue('notes', '');
       loadJobs();
-      
+
       if (socket && isConnected) {
         socket.emit('new_job', response.data.job);
       }
-      
+
       setTimeout(() => setSuccess(''), 5000);
       return true;
     } catch (err) {
@@ -189,32 +190,59 @@ const ClientDashboard = () => {
       )}
 
       {/* Live Map Section - Shows during active job */}
-{activeJob && activeJob.status !== 'completed' && userLocation && (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 relative z-0">
-    <div className="bg-white rounded-xl shadow-lg p-4">
-      <div className="mb-3 flex justify-between items-center">
-        <h3 className="font-semibold text-gray-900">Live Tracking</h3>
-        {garageLocation && (
-          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
-             Garage en route
-          </span>
-        )}
-      </div>
-      <div className="relative z-0">
-        <LiveMap
-          clientLocation={userLocation}
-          garageLocation={garageLocation}
-          isActive={true}
-        />
-      </div>
-      <p className="text-xs text-gray-500 mt-3 text-center">
-        {garageLocation 
-          ? ' Garage is on the move - tracking in real-time' 
-          : ' Waiting for garage to start moving...'}
-      </p>
-    </div>
-  </div>
-)}
+      {activeJob && activeJob.status !== 'completed' && userLocation && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-white rounded-xl shadow-lg p-4">
+            <div className="mb-3 flex justify-between items-center">
+              <div>
+                <h3 className="font-semibold text-gray-900">Live Tracking</h3>
+                <p className="text-xs text-gray-500">Track your rescue vehicle in real-time</p>
+              </div>
+              {garageLocation && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
+                   Vehicle en route
+                </span>
+              )}
+            </div>
+
+            <LiveMap
+              clientLocation={userLocation}
+              garageLocation={garageLocation}
+              isActive={true}
+              onRouteCalculated={(info) => setEtaInfo(info)}
+            />
+
+            {/* ETA Message */}
+            {etaInfo && garageLocation && (
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <svg className="h-5 w-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>
+                    Garage is <strong>{etaInfo.distance} km</strong> away -
+                    Estimated arrival in <strong>{etaInfo.duration} minutes</strong>
+                  </span>
+                </div>
+                <p className="text-xs text-blue-600 mt-1 ml-7">
+                  The driver is following the optimal route to reach you
+                </p>
+              </div>
+            )}
+
+            {!garageLocation && activeJob.status === 'accepted' && (
+              <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-yellow-800">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Garage has accepted your request and will start moving shortly</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -246,7 +274,7 @@ const ClientDashboard = () => {
             <p className="text-sm">{error}</p>
           </div>
         )}
-        
+
         {success && (
           <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in">
             <p className="text-sm">{success}</p>
@@ -257,7 +285,7 @@ const ClientDashboard = () => {
         {activeSection === 'request' && (
           <div className="bg-white rounded-xl shadow-lg p-6 card-hover">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Emergency Rescue Request</h2>
-            
+
             {activeJob && activeJob.status !== 'completed' ? (
               <div className="text-center py-8">
                 <div className="text-6xl mb-4 animate-pulse">{getStatusIcon(activeJob.status)}</div>
@@ -283,7 +311,7 @@ const ClientDashboard = () => {
                   value={values.serviceType}
                   onChange={(val) => setFieldValue('serviceType', val)}
                 />
-                
+
                 <div className="mt-4">
                   <LocationPicker
                     address={values.clientAddress}
@@ -291,7 +319,7 @@ const ClientDashboard = () => {
                     onCoordinatesChange={(coords) => setFieldValue('clientLocation', coords)}
                   />
                 </div>
-                
+
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Additional Notes (Optional)
@@ -344,7 +372,7 @@ const ClientDashboard = () => {
         {activeSection === 'history' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">My Rescue History</h2>
-            
+
             {jobs.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,7 +399,7 @@ const ClientDashboard = () => {
         {activeSection === 'garages' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Nearby Verified Garages</h2>
-            
+
             {nearbyGarages.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p>No garages found nearby</p>
