@@ -1,10 +1,9 @@
-// Import the functions you need from the SDKs
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithRedirect, 
-  getRedirectResult, 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   signInWithPopup,
   onAuthStateChanged
@@ -33,7 +32,6 @@ if (missingKeys.length > 0) {
   console.error('Missing Firebase config keys:', missingKeys);
 }
 
-// Initialize Firebase
 let app;
 let auth;
 let googleProvider;
@@ -61,7 +59,7 @@ const isPopupSupported = () => {
 
 export const signInWithGoogle = async () => {
   console.log('signInWithGoogle called');
-  
+
   if (!auth || !googleProvider) {
     console.error('Firebase not initialized properly');
     return {
@@ -69,11 +67,14 @@ export const signInWithGoogle = async () => {
       error: 'Firebase configuration error. Please check your environment variables.'
     };
   }
-  
+
   if (isPopupSupported()) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       console.log('Popup sign-in success:', result.user.email);
+
+      const idToken = await result.user.getIdToken();
+
       return {
         success: true,
         user: {
@@ -81,17 +82,18 @@ export const signInWithGoogle = async () => {
           email: result.user.email,
           fullName: result.user.displayName,
           photoURL: result.user.photoURL,
+          idToken,
         }
       };
     } catch (error) {
       console.error('Popup sign-in error:', error);
-      
+
       // If popup failed (blocked), fall back to redirect
       if (error.code === 'auth/popup-blocked') {
         console.log('Popup blocked, falling back to redirect');
         return signInWithGoogleRedirect();
       }
-      
+
       return {
         success: false,
         error: error.message || 'Unable to sign in with Google'
@@ -104,7 +106,7 @@ export const signInWithGoogle = async () => {
 
 export const signInWithGoogleRedirect = async () => {
   console.log('signInWithGoogleRedirect called');
-  
+
   if (!auth || !googleProvider) {
     console.error('Firebase not initialized properly');
     return {
@@ -112,7 +114,7 @@ export const signInWithGoogleRedirect = async () => {
       error: 'Firebase configuration error.'
     };
   }
-  
+
   try {
     await signInWithRedirect(auth, googleProvider);
     console.log('Redirect initiated');
@@ -133,17 +135,20 @@ export const signInWithGoogleRedirect = async () => {
 // Handle redirect result (call this on app load)
 export const handleRedirectResult = async () => {
   console.log('Checking for redirect result...');
-  
+
   if (!auth) {
     console.error('Firebase auth not initialized');
     return { success: false, error: 'Firebase not initialized' };
   }
-  
+
   try {
     const result = await getRedirectResult(auth);
     if (result) {
       console.log('Redirect result found:', result.user.email);
       const user = result.user;
+
+      const idToken = await user.getIdToken();
+
       return {
         success: true,
         user: {
@@ -151,6 +156,7 @@ export const handleRedirectResult = async () => {
           email: user.email,
           fullName: user.displayName,
           photoURL: user.photoURL,
+          idToken,
         }
       };
     }
@@ -170,7 +176,7 @@ export const getFirebaseIdToken = async () => {
     console.log('No authenticated Firebase user');
     return null;
   }
-  
+
   try {
     const token = await auth.currentUser.getIdToken();
     console.log('Firebase ID token retrieved');
@@ -184,9 +190,9 @@ export const getFirebaseIdToken = async () => {
 export const onFirebaseAuthStateChanged = (callback) => {
   if (!auth) {
     console.error('Firebase auth not initialized');
-    return () => {};
+    return () => { };
   }
-  
+
   return onAuthStateChanged(auth, (user) => {
     console.log('Firebase auth state changed:', user?.email || 'No user');
     callback(user);
