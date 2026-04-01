@@ -2,76 +2,84 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithGoogle, handleRedirectResult, signOutGoogle } from '../config/firebase';
+
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkRedirectResult = async () => {
-      const result = await handleRedirectResult();
-      
-      if (result.success && result.user) {
-        console.log('Google redirect login successful:', result.user.email);
-        setIsGoogleLoading(true);
-        
-        navigate('/register', { 
-          state: { 
-            googleUser: result.user,
-            isGoogleSignUp: true 
-          } 
-        });
-        setIsGoogleLoading(false);
-      } else if (result.error) {
-        console.error('Redirect result error:', result.error);
-        setError('Google sign-in failed. Please try email login.');
-      }
-    };
-    
-    checkRedirectResult();
-  }, [navigate]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    
-    const result = await login(identifier, password);
-    
-    if (result.success) {
-      navigate('/');
-    } else {
-      setError(result.error);
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
-    setError('');
-    
-    const result = await signInWithGoogle();
+useEffect(() => {
+  const checkRedirectResult = async () => {
+    const result = await handleRedirectResult();
     
     if (result.success && result.user) {
-      console.log('Google login successful:', result.user.email);
+      console.log('Google redirect login successful:', result.user.email);
+      setIsGoogleLoading(true);
+      
       navigate('/register', { 
         state: { 
           googleUser: result.user,
           isGoogleSignUp: true 
         } 
       });
+      setIsGoogleLoading(false);
+    } else if (result.error) {
+      console.error('Redirect result error:', result.error);
+      setError('Google sign-in failed. Please try email login.');
+    }
+  };
+  
+  checkRedirectResult();
+}, [navigate]);
+
+useEffect(() => {
+  const clearGoogleSession = async () => {
+    await signOutGoogle();
+  };
+  clearGoogleSession();
+}, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    const result = await login(identifier, password);
+
+    if (result.success) {
+      navigate('/');
+    } else {
+      setError(result.error);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    setError('');
+
+    const result = await signInWithGoogle();
+
+    if (result.success && result.user) {
+      console.log('Google login successful:', result.user.email);
+      navigate('/register', {
+        state: {
+          googleUser: result.user,
+          isGoogleSignUp: true
+        }
+      });
     } else if (result.redirect) {
       console.log('Redirecting to Google...');
     } else {
       setError(result.error || 'Google sign-in failed. Please try again.');
     }
-    
+
     setIsGoogleLoading(false);
   };
 
@@ -110,7 +118,7 @@ const LoginPage = () => {
               </div>
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div>
               <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-1">
@@ -134,7 +142,7 @@ const LoginPage = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
