@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { signOutGoogle } from '../config/firebase';
 
 const RegisterPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  
+  // Check if coming from Google Sign-In
+  const googleUser = location.state?.googleUser;
+  const isGoogleSignUp = location.state?.isGoogleSignUp;
+  
   const [formData, setFormData] = useState({
-    fullName: '',
+    fullName: googleUser?.fullName || '',
     phone: '',
-    email: '',
+    email: googleUser?.email || '',
     password: '',
     confirmPassword: '',
     role: 'client',
@@ -26,9 +35,19 @@ const RegisterPage = () => {
   const [showBusinessFields, setShowBusinessFields] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const { register } = useAuth();
-  const navigate = useNavigate();
+  const [isGoogleUser, setIsGoogleUser] = useState(!!googleUser);
+
+  // Pre-fill form with Google data if available
+  useEffect(() => {
+    if (googleUser && isGoogleSignUp) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: googleUser.fullName || '',
+        email: googleUser.email || '',
+      }));
+      console.log('Google user data loaded:', googleUser.email);
+    }
+  }, [googleUser, isGoogleSignUp]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,14 +67,17 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
+    // Skip password validation for Google users (they'll create password later or use Google only)
+    if (!isGoogleUser) {
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
     }
     
     setIsLoading(true);
@@ -65,7 +87,8 @@ const RegisterPage = () => {
       fullName: formData.fullName,
       phone: formData.phone,
       email: formData.email,
-      password: formData.password,
+      // For Google users, generate a random password or use Google ID
+      password: isGoogleUser ? `google_${Date.now()}` : formData.password,
     };
     
     const businessData = formData.role === 'garage' ? businessDetails : null;
@@ -73,12 +96,30 @@ const RegisterPage = () => {
     const result = await register(userData, businessData);
     
     if (result.success) {
+      // Clear Google sign-out if needed
+      if (isGoogleUser) {
+        // Optional: sign out from Firebase after backend registration
+        // await signOutGoogle();
+      }
       navigate('/');
     } else {
       setError(result.error);
     }
     
     setIsLoading(false);
+  };
+
+  const handleSkipGoogleSignUp = () => {
+    setIsGoogleUser(false);
+    setFormData(prev => ({
+      ...prev,
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    }));
+    // Clear location state
+    navigate('/register', { replace: true });
   };
 
   return (
@@ -94,11 +135,29 @@ const RegisterPage = () => {
             </div>
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gradient">
-            Create Account
+            {isGoogleUser ? 'Complete Your Profile' : 'Create Account'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Join Roadside Rescue today
+            {isGoogleUser 
+              ? `Welcome ${googleUser?.fullName || ''}! Please complete your registration.`
+              : 'Join Roadside Rescue today'}
           </p>
+          
+          {/* Google Sign-Up Banner */}
+          {isGoogleUser && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
+              <svg className="h-3 w-3" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              </svg>
+              <span>Signing up with Google</span>
+              <button
+                onClick={handleSkipGoogleSignUp}
+                className="ml-2 text-blue-500 hover:text-blue-700"
+              >
+                ×
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Registration Form */}
@@ -133,7 +192,7 @@ const RegisterPage = () => {
                     : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
                 }`}
               >
-                🚗 Stranded Driver
+                 Stranded Driver
               </button>
               <button
                 type="button"
@@ -144,7 +203,7 @@ const RegisterPage = () => {
                     : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
                 }`}
               >
-                🔧 Garage Owner
+                 Garage Owner
               </button>
             </div>
           </div>
@@ -191,42 +250,60 @@ const RegisterPage = () => {
                 type="email"
                 name="email"
                 required
-                className="input-primary"
+                className={`input-primary ${isGoogleUser ? 'bg-gray-100 text-gray-500' : ''}`}
                 placeholder="john@example.com"
                 value={formData.email}
                 onChange={handleChange}
+                disabled={isGoogleUser}
               />
+              {isGoogleUser && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Email is from your Google account and cannot be changed
+                </p>
+              )}
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password *
-              </label>
-              <input
-                type="password"
-                name="password"
-                required
-                className="input-primary"
-                placeholder="Minimum 6 characters"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
+            {!isGoogleUser && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    className="input-primary"
+                    placeholder="Minimum 6 characters"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password *
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    required
+                    className="input-primary"
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </div>
+              </>
+            )}
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                className="input-primary"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
+            {isGoogleUser && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs text-blue-700">
+                   You're signing up with Google. You'll be able to set a password later from your profile settings.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Garage Business Details (conditional) */}
@@ -311,7 +388,7 @@ const RegisterPage = () => {
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
-                <span>Create Account</span>
+                <span>{isGoogleUser ? 'Complete Registration' : 'Create Account'}</span>
               </>
             )}
           </button>
