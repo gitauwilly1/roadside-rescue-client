@@ -285,65 +285,7 @@ const AdminDashboard = () => {
 
         {/* Stats Section */}
         {activeSection === 'stats' && stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Total Users</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.users?.total || 0}</p>
-                </div>
-                <div className="text-4xl">👥</div>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                <span>Clients: {stats.users?.clients || 0}</span>
-                <span className="ml-4">Garages: {stats.users?.garages || 0}</span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Garages</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.garages?.total || 0}</p>
-                </div>
-                <div className="text-4xl">🏪</div>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                <span>Active: {stats.garages?.active || 0}</span>
-                <span className="ml-4">Verified: {stats.garages?.verified || 0}</span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Total Jobs</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.jobs?.total || 0}</p>
-                </div>
-                <div className="text-4xl">📋</div>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                <span>Completed: {stats.jobs?.completed || 0}</span>
-                <span className="ml-4">Pending: {stats.jobs?.pending || 0}</span>
-              </div>
-              <div className="mt-2 text-sm text-green-600">
-                Completion Rate: {stats.jobs?.completionRate || 0}%
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6 card-hover border-l-4 border-red-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Average Rating</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.averageRating || 0}</p>
-                </div>
-                <div className="text-4xl">⭐</div>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                Based on all reviews
-              </div>
-            </div>
-          </div>
+          <AnalyticsCards stats={stats} />
         )}
 
         {/* Users Section */}
