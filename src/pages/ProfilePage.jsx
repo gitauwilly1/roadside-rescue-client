@@ -161,7 +161,7 @@ const ProfilePage = () => {
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
-            👤 Profile
+             Profile
           </button>
           {isGarage && (
             <button
@@ -172,7 +172,7 @@ const ProfilePage = () => {
                   : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
               }`}
             >
-              🏪 Garage Info
+               Garage Info
             </button>
           )}
           <button
@@ -183,7 +183,7 @@ const ProfilePage = () => {
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
             }`}
           >
-            🔒 Security
+             Security
           </button>
           {isClient && (
             <button
@@ -194,7 +194,7 @@ const ProfilePage = () => {
                   : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
               }`}
             >
-              🔔 Notifications
+               Notifications
             </button>
           )}
         </div>
