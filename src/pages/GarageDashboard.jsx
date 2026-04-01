@@ -21,9 +21,9 @@ const GarageDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newJobAlert, setNewJobAlert] = useState(null);
+  const [navigationInfo, setNavigationInfo] = useState(null);
   const locationIntervalRef = useRef(null);
   const isLocationSharingRef = useRef(false);
-  const [navigationInfo, setNavigationInfo] = useState(null);
 
   const { location: currentLocation, getCurrentPosition, retry: retryLocation } = useGeoLocation({ 
     watch: true,
@@ -41,7 +41,43 @@ const GarageDashboard = () => {
     }
   }, [routerLocation.pathname]);
 
-  // Start location sharing when garage is en route
+  // Register garage online with location when toggled on
+  useEffect(() => {
+    if (isOnline && socket && isConnected && currentLocation) {
+      console.log('Registering garage online with location:', currentLocation);
+      socket.emit('garage_online', {
+        garageId: garageProfile?._id,
+        location: {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude
+        }
+      });
+    }
+    
+    if (!isOnline && socket && isConnected) {
+      console.log('Registering garage offline');
+      socket.emit('garage_offline');
+    }
+  }, [isOnline, socket, isConnected, currentLocation, garageProfile]);
+
+  // Send periodic location updates when online and not on an active job
+  useEffect(() => {
+    if (!isOnline || !socket || !isConnected || !currentLocation) return;
+    
+    const interval = setInterval(() => {
+      socket.emit('garage_location_update', {
+        garageId: garageProfile?._id,
+        location: {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude
+        }
+      });
+    }, 10000); // Update every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [isOnline, socket, isConnected, currentLocation, garageProfile]);
+
+  // Start location sharing for active job when en route
   useEffect(() => {
     // Clear existing interval
     if (locationIntervalRef.current) {
@@ -61,7 +97,7 @@ const GarageDashboard = () => {
       // Share location every 5 seconds
       locationIntervalRef.current = setInterval(() => {
         if (currentLocation && socket && isConnected && activeJob) {
-          socket.emit('garage_location_update', {
+          socket.emit('garage_location_share', {
             jobId: activeJob._id,
             location: {
               latitude: currentLocation.latitude,
@@ -69,7 +105,7 @@ const GarageDashboard = () => {
               coordinates: currentLocation.coordinates
             }
           });
-          console.log('Location shared:', currentLocation);
+          console.log('Location shared for job:', activeJob._id);
         } else if (!currentLocation && activeJob) {
           console.log('No location available, retrying...');
           retryLocation();
@@ -81,6 +117,7 @@ const GarageDashboard = () => {
       if (locationIntervalRef.current) {
         clearInterval(locationIntervalRef.current);
         locationIntervalRef.current = null;
+        isLocationSharingRef.current = false;
       }
     };
   }, [activeJob, socket, isConnected, currentLocation, getCurrentPosition, retryLocation]);
@@ -96,7 +133,7 @@ const GarageDashboard = () => {
 
   // Socket listeners for real-time alerts
   useEffect(() => {
-    if (!socket || !isConnected || !isOnline) return;
+    if (!socket || !isConnected) return;
 
     socket.on('new_job_alert', (job) => {
       console.log('New job alert received:', job);
@@ -111,11 +148,20 @@ const GarageDashboard = () => {
       loadAvailableJobs();
     });
 
+    socket.on('job_taken', ({ jobId, garageId }) => {
+      console.log(`Job ${jobId} taken by another garage`);
+      loadAvailableJobs();
+      if (newJobAlert && newJobAlert._id === jobId) {
+        setNewJobAlert(null);
+      }
+    });
+
     return () => {
       socket.off('new_job_alert');
       socket.off('job_status_update');
+      socket.off('job_taken');
     };
-  }, [socket, isConnected, isOnline]);
+  }, [socket, isConnected]);
 
   const loadAvailableJobs = async () => {
     try {
@@ -152,7 +198,7 @@ const GarageDashboard = () => {
   const handleAcceptJob = async (jobId) => {
     setIsLoading(true);
     try {
-      const response = await garage.updateJobStatus(jobId, 'accepted');
+      await garage.updateJobStatus(jobId, 'accepted');
       setSuccess(`Job accepted! You can now navigate to the client.`);
       setNewJobAlert(null);
       
@@ -235,7 +281,7 @@ const GarageDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'available' ? ' Emergency Rescue Requests' : ' My Assigned Jobs'}
+                {activeSection === 'available' ? ' Emergency Rescue Requests' : '📋 My Assigned Jobs'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
@@ -284,47 +330,47 @@ const GarageDashboard = () => {
       )}
 
       {/* Navigation Map - Shows during active job with client location */}
-{activeJob && activeJob.status !== 'completed' && activeJob.clientLocation && (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-    <div className="bg-white rounded-xl shadow-lg p-4">
-      <div className="mb-3 flex justify-between items-center">
-        <div>
-          <h3 className="font-semibold text-gray-900">Navigation Guide</h3>
-          <p className="text-xs text-gray-500">Follow the route to reach the client</p>
-        </div>
-        {activeJob.status === 'en_route' && (
-          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
-            🚗 En Route
-          </span>
-        )}
-      </div>
-      
-      <GarageMap
-        clientLocation={activeJob.clientLocation}
-        garageLocation={currentLocation}
-        onRouteCalculated={(info) => setNavigationInfo(info)}
-      />
-      
-      {/* Quick Directions */}
-      {navigationInfo && (
-        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-          <div className="flex items-center gap-2 text-sm text-blue-800">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>
-              Drive approximately <strong>{navigationInfo.distance} km</strong> - 
-              Estimated <strong>{navigationInfo.duration} minutes</strong>
-            </span>
+      {activeJob && activeJob.status !== 'completed' && activeJob.clientLocation && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-white rounded-xl shadow-lg p-4">
+            <div className="mb-3 flex justify-between items-center">
+              <div>
+                <h3 className="font-semibold text-gray-900">Navigation Guide</h3>
+                <p className="text-xs text-gray-500">Follow the route to reach the client</p>
+              </div>
+              {activeJob.status === 'en_route' && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
+                   En Route
+                </span>
+              )}
+            </div>
+            
+            <GarageMap
+              clientLocation={activeJob.clientLocation}
+              garageLocation={currentLocation}
+              onRouteCalculated={(info) => setNavigationInfo(info)}
+            />
+            
+            {/* Quick Directions */}
+            {navigationInfo && (
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    Drive approximately <strong>{navigationInfo.distance} km</strong> - 
+                    Estimated <strong>{navigationInfo.duration} minutes</strong>
+                  </span>
+                </div>
+                <p className="text-xs text-blue-600 mt-1 ml-7">
+                  Use the map above for turn-by-turn directions
+                </p>
+              </div>
+            )}
           </div>
-          <p className="text-xs text-blue-600 mt-1 ml-7">
-            Use the map above for turn-by-turn directions
-          </p>
         </div>
       )}
-    </div>
-  </div>
-)}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
