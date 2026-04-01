@@ -101,14 +101,14 @@ const AdminDashboard = () => {
 
   const filterData = () => {
     if (activeSection === 'users') {
-      const filtered = users.filter(user => 
+      const filtered = users.filter(user =>
         user.fullName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         user.phone?.includes(debouncedSearch) ||
         user.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
       setUsers(filtered);
     } else if (activeSection === 'garages') {
-      const filtered = garages.filter(garage => 
+      const filtered = garages.filter(garage =>
         garage.businessName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         garage.businessPhone?.includes(debouncedSearch) ||
         garage.address?.toLowerCase().includes(debouncedSearch.toLowerCase())
@@ -180,6 +180,57 @@ const AdminDashboard = () => {
     return texts[status] || status;
   };
 
+  const handleDeleteJob = async (jobId, reason = '') => {
+    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) return;
+
+    setIsLoading(true);
+    try {
+      await admin.deleteJob(jobId, { reason });
+      setSuccess('Job deleted successfully');
+      loadJobs();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete job');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
+
+    setIsLoading(true);
+    try {
+      await admin.deleteReview(reviewId);
+      setSuccess('Review deleted successfully');
+      loadJobs(); // Reload to update job status
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete review');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this vehicle? This action cannot be undone.')) return;
+
+    setIsLoading(true);
+    try {
+      await admin.deleteVehicle(vehicleId);
+      setSuccess('Vehicle deleted successfully');
+      loadVehicles();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete vehicle');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Banner */}
@@ -205,7 +256,7 @@ const AdminDashboard = () => {
             {error}
           </div>
         )}
-        
+
         {success && (
           <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg">
             {success}
@@ -330,11 +381,10 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => toggleUserStatus(userItem._id, userItem.isActive)}
                           disabled={isLoading || userItem.role === 'admin'}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                            userItem.isActive 
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${userItem.isActive
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
                         >
                           {userItem.isActive ? 'Deactivate' : 'Activate'}
                         </button>
@@ -382,11 +432,10 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => verifyGarage(garageItem._id, garageItem.isVerified)}
                           disabled={isLoading}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                            garageItem.isVerified 
-                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          } ${isLoading && 'opacity-50 cursor-not-allowed'}`}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${garageItem.isVerified
+                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            } ${isLoading && 'opacity-50 cursor-not-allowed'}`}
                         >
                           {garageItem.isVerified ? 'Unverify' : 'Verify'}
                         </button>
@@ -411,6 +460,7 @@ const AdminDashboard = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Garage</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -426,6 +476,15 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(jobItem.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => handleDeleteJob(jobItem._id)}
+                          disabled={isLoading}
+                          className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -447,6 +506,7 @@ const AdminDashboard = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -462,6 +522,15 @@ const AdminDashboard = () => {
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${vehicle.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {vehicle.isActive ? 'Active' : 'Deleted'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => handleDeleteVehicle(vehicle._id)}
+                          disabled={isLoading}
+                          className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
