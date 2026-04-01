@@ -8,6 +8,7 @@ import useJobTracking from '../hooks/useJobTracking';
 import JobAlert from '../components/garage/JobAlert';
 import GarageJobCard from '../components/garage/GarageJobCard';
 import OnlineToggle from '../components/garage/OnlineToggle';
+import GarageMap from '../components/garage/GarageMap';
 
 const GarageDashboard = () => {
   const { user, garage: garageProfile } = useAuth();
@@ -22,6 +23,7 @@ const GarageDashboard = () => {
   const [newJobAlert, setNewJobAlert] = useState(null);
   const locationIntervalRef = useRef(null);
   const isLocationSharingRef = useRef(false);
+  const [navigationInfo, setNavigationInfo] = useState(null);
 
   const { location: currentLocation, getCurrentPosition, retry: retryLocation } = useGeoLocation({ 
     watch: true,
@@ -280,6 +282,49 @@ const GarageDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Navigation Map - Shows during active job with client location */}
+{activeJob && activeJob.status !== 'completed' && activeJob.clientLocation && (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    <div className="bg-white rounded-xl shadow-lg p-4">
+      <div className="mb-3 flex justify-between items-center">
+        <div>
+          <h3 className="font-semibold text-gray-900">Navigation Guide</h3>
+          <p className="text-xs text-gray-500">Follow the route to reach the client</p>
+        </div>
+        {activeJob.status === 'en_route' && (
+          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
+            🚗 En Route
+          </span>
+        )}
+      </div>
+      
+      <GarageMap
+        clientLocation={activeJob.clientLocation}
+        garageLocation={currentLocation}
+        onRouteCalculated={(info) => setNavigationInfo(info)}
+      />
+      
+      {/* Quick Directions */}
+      {navigationInfo && (
+        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-blue-800">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              Drive approximately <strong>{navigationInfo.distance} km</strong> - 
+              Estimated <strong>{navigationInfo.duration} minutes</strong>
+            </span>
+          </div>
+          <p className="text-xs text-blue-600 mt-1 ml-7">
+            Use the map above for turn-by-turn directions
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
