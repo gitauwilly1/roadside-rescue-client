@@ -23,11 +23,11 @@ const ClientDashboard = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [garageLocation, setGarageLocation] = useState(null);
-  const [hasLoadedLocation, setHasLoadedLocation] = useState(false);
   const [etaInfo, setEtaInfo] = useState(null);
+  const [hasLoadedLocation, setHasLoadedLocation] = useState(false);
 
   const { location: userLocation, getCurrentPosition } = useGeoLocation({ watch: true });
-  const { jobs, activeJob, loadJobs } = useJobTracking('client', socket, isConnected);
+  const { jobs, activeJob, loadJobs, setActiveJob } = useJobTracking('client', socket, isConnected);
 
   const { values, handleChange, handleSubmit, isSubmitting, setFieldValue } = useForm({
     serviceType: 'tire_change',
@@ -61,15 +61,38 @@ const ClientDashboard = () => {
     const handleGarageLocation = ({ jobId, location }) => {
       if (activeJob && activeJob._id === jobId) {
         setGarageLocation(location);
+        console.log('Garage location update received:', location);
       }
     };
 
+    const handleJobStatusUpdate = (updatedJob) => {
+      console.log('Job status update received:', updatedJob);
+      if (activeJob && activeJob._id === updatedJob._id) {
+        setActiveJob(updatedJob);
+        
+        const statusMessages = {
+          accepted: ' Your rescue request has been accepted! A garage is on their way.',
+          en_route: ' The garage is en route to your location!',
+          in_progress: ' The mechanic has arrived and is working on your vehicle.',
+          completed: ' Your rescue is complete! Please rate your experience.'
+        };
+        
+        if (statusMessages[updatedJob.status]) {
+          setSuccess(statusMessages[updatedJob.status]);
+          setTimeout(() => setSuccess(''), 5000);
+        }
+      }
+      loadJobs();
+    };
+
     socket.on('garage_location_update', handleGarageLocation);
+    socket.on('job_status_update', handleJobStatusUpdate);
 
     return () => {
       socket.off('garage_location_update', handleGarageLocation);
+      socket.off('job_status_update', handleJobStatusUpdate);
     };
-  }, [socket, isConnected, activeJob]);
+  }, [socket, isConnected, activeJob, loadJobs, setActiveJob]);
 
   useEffect(() => {
     getCurrentPosition();
@@ -95,11 +118,12 @@ const ClientDashboard = () => {
       setSuccess('Job request created successfully! A nearby garage will respond shortly.');
       setFieldValue('notes', '');
       loadJobs();
-
+      
       if (socket && isConnected) {
         socket.emit('new_job', response.data.job);
+        console.log('New job emitted to server:', response.data.job._id);
       }
-
+      
       setTimeout(() => setSuccess(''), 5000);
       return true;
     } catch (err) {
@@ -160,7 +184,7 @@ const ClientDashboard = () => {
         />
       )}
 
-      {/* Active Job Emergency Banner with Map */}
+      {/* Active Job Emergency Banner */}
       {activeJob && activeJob.status !== 'completed' && (
         <div className="bg-gradient-primary text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -204,14 +228,14 @@ const ClientDashboard = () => {
                 </span>
               )}
             </div>
-
+            
             <LiveMap
               clientLocation={userLocation}
               garageLocation={garageLocation}
               isActive={true}
               onRouteCalculated={(info) => setEtaInfo(info)}
             />
-
+            
             {/* ETA Message */}
             {etaInfo && garageLocation && (
               <div className="mt-3 p-3 bg-blue-50 rounded-lg">
@@ -220,7 +244,7 @@ const ClientDashboard = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>
-                    Garage is <strong>{etaInfo.distance} km</strong> away -
+                    Garage is <strong>{etaInfo.distance} km</strong> away - 
                     Estimated arrival in <strong>{etaInfo.duration} minutes</strong>
                   </span>
                 </div>
@@ -229,7 +253,7 @@ const ClientDashboard = () => {
                 </p>
               </div>
             )}
-
+            
             {!garageLocation && activeJob.status === 'accepted' && (
               <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-yellow-800">
@@ -274,7 +298,7 @@ const ClientDashboard = () => {
             <p className="text-sm">{error}</p>
           </div>
         )}
-
+        
         {success && (
           <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in">
             <p className="text-sm">{success}</p>
@@ -285,7 +309,7 @@ const ClientDashboard = () => {
         {activeSection === 'request' && (
           <div className="bg-white rounded-xl shadow-lg p-6 card-hover">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Emergency Rescue Request</h2>
-
+            
             {activeJob && activeJob.status !== 'completed' ? (
               <div className="text-center py-8">
                 <div className="text-6xl mb-4 animate-pulse">{getStatusIcon(activeJob.status)}</div>
@@ -311,7 +335,7 @@ const ClientDashboard = () => {
                   value={values.serviceType}
                   onChange={(val) => setFieldValue('serviceType', val)}
                 />
-
+                
                 <div className="mt-4">
                   <LocationPicker
                     address={values.clientAddress}
@@ -319,7 +343,7 @@ const ClientDashboard = () => {
                     onCoordinatesChange={(coords) => setFieldValue('clientLocation', coords)}
                   />
                 </div>
-
+                
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Additional Notes (Optional)
@@ -372,7 +396,7 @@ const ClientDashboard = () => {
         {activeSection === 'history' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">My Rescue History</h2>
-
+            
             {jobs.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -399,7 +423,7 @@ const ClientDashboard = () => {
         {activeSection === 'garages' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Nearby Verified Garages</h2>
-
+            
             {nearbyGarages.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p>No garages found nearby</p>
@@ -423,7 +447,7 @@ const ClientDashboard = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{garage.address}</p>
-                        <p className="text-sm text-gray-600"> {garage.businessPhone}</p>
+                        <p className="text-sm text-gray-600">📞 {garage.businessPhone}</p>
                         <div className="flex gap-2 mt-2">
                           {garage.services?.slice(0, 3).map((service, idx) => (
                             <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
