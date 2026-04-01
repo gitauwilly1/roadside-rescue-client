@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
-import useForm from '../hooks/useForm';
 import useDebounce from '../hooks/useDebounce';
 import AnalyticsCards from '../components/admin/AnalyticsCards';
 
@@ -102,14 +101,14 @@ const AdminDashboard = () => {
 
   const filterData = () => {
     if (activeSection === 'users') {
-      const filtered = users.filter(user =>
+      const filtered = users.filter(user => 
         user.fullName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         user.phone?.includes(debouncedSearch) ||
         user.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
       setUsers(filtered);
     } else if (activeSection === 'garages') {
-      const filtered = garages.filter(garage =>
+      const filtered = garages.filter(garage => 
         garage.businessName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         garage.businessPhone?.includes(debouncedSearch) ||
         garage.address?.toLowerCase().includes(debouncedSearch.toLowerCase())
@@ -142,6 +141,40 @@ const AdminDashboard = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to verify garage');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) return;
+    
+    setIsLoading(true);
+    try {
+      await admin.deleteJob(jobId);
+      setSuccess('Job deleted successfully');
+      loadJobs();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete job');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this vehicle? This action cannot be undone.')) return;
+    
+    setIsLoading(true);
+    try {
+      await admin.deleteVehicle(vehicleId);
+      setSuccess('Vehicle deleted successfully');
+      loadVehicles();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete vehicle');
       setTimeout(() => setError(''), 3000);
     } finally {
       setIsLoading(false);
@@ -181,57 +214,6 @@ const AdminDashboard = () => {
     return texts[status] || status;
   };
 
-  const handleDeleteJob = async (jobId, reason = '') => {
-    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) return;
-
-    setIsLoading(true);
-    try {
-      await admin.deleteJob(jobId, { reason });
-      setSuccess('Job deleted successfully');
-      loadJobs();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete job');
-      setTimeout(() => setError(''), 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
-
-    setIsLoading(true);
-    try {
-      await admin.deleteReview(reviewId);
-      setSuccess('Review deleted successfully');
-      loadJobs(); // Reload to update job status
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete review');
-      setTimeout(() => setError(''), 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteVehicle = async (vehicleId) => {
-    if (!window.confirm('Are you sure you want to permanently delete this vehicle? This action cannot be undone.')) return;
-
-    setIsLoading(true);
-    try {
-      await admin.deleteVehicle(vehicleId);
-      setSuccess('Vehicle deleted successfully');
-      loadVehicles();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete vehicle');
-      setTimeout(() => setError(''), 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Banner */}
@@ -250,6 +232,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Alerts */}
         {error && (
@@ -257,7 +240,7 @@ const AdminDashboard = () => {
             {error}
           </div>
         )}
-
+        
         {success && (
           <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg">
             {success}
@@ -284,7 +267,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Stats Section */}
+        {/* Stats Section with Analytics */}
         {activeSection === 'stats' && stats && (
           <AnalyticsCards stats={stats} />
         )}
@@ -324,10 +307,11 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => toggleUserStatus(userItem._id, userItem.isActive)}
                           disabled={isLoading || userItem.role === 'admin'}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${userItem.isActive
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                            userItem.isActive 
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
                         >
                           {userItem.isActive ? 'Deactivate' : 'Activate'}
                         </button>
@@ -375,10 +359,11 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => verifyGarage(garageItem._id, garageItem.isVerified)}
                           disabled={isLoading}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${garageItem.isVerified
-                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            } ${isLoading && 'opacity-50 cursor-not-allowed'}`}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                            garageItem.isVerified 
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          } ${isLoading && 'opacity-50 cursor-not-allowed'}`}
                         >
                           {garageItem.isVerified ? 'Unverify' : 'Verify'}
                         </button>
@@ -391,7 +376,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Jobs Section */}
+        {/* Jobs Section with Delete */}
         {activeSection === 'jobs' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -437,7 +422,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Vehicles Section */}
+        {/* Vehicles Section with Delete */}
         {activeSection === 'vehicles' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
