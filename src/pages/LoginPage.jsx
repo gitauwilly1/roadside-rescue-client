@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { signInWithGoogle, handleRedirectResult, signOutGoogle } from '../services/firebase';
-
+import { signInWithGoogle, handleRedirectResult, signOutGoogle } from '../config/firebase';
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
