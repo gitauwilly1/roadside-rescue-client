@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+// Fix for default marker icons in Leaflet with Vite
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -36,15 +37,21 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
   const routeLayerRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
+    // Default center to Nairobi if no location
     const center = clientLocation 
       ? [clientLocation.latitude || clientLocation.coordinates[1], clientLocation.longitude || clientLocation.coordinates[0]]
       : [-1.2921, 36.8219];
 
-    const map = L.map(mapRef.current).setView(center, 13);
+    const map = L.map(mapRef.current, {
+      zoomControl: true,
+      attributionControl: true
+    }).setView(center, 13);
     
+    // Add tile layer (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
@@ -59,6 +66,7 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
     };
   }, []);
 
+  // Update client marker
   useEffect(() => {
     if (!mapInstanceRef.current || !mapLoaded) return;
     
@@ -75,12 +83,14 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
           .bindPopup('<strong>📍 Your Location</strong><br/>Emergency rescue requested here');
       }
       
+      // Center map on client if not tracking garage
       if (!garageLocation && isActive) {
         mapInstanceRef.current.setView(position, 14);
       }
     }
   }, [clientLocation, mapLoaded, isActive, garageLocation]);
 
+  // Update garage marker
   useEffect(() => {
     if (!mapInstanceRef.current || !mapLoaded) return;
     
@@ -97,6 +107,7 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
           .bindPopup('<strong>🚚 Garage Vehicle</strong><br/>En route to your location');
       }
       
+      // Center map to show both locations
       if (clientLocation) {
         const clientLat = clientLocation.latitude || clientLocation.coordinates[1];
         const clientLng = clientLocation.longitude || clientLocation.coordinates[0];
@@ -109,6 +120,7 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
     }
   }, [garageLocation, mapLoaded, clientLocation]);
 
+  // Draw route between client and garage
   useEffect(() => {
     if (!mapInstanceRef.current || !mapLoaded) return;
     if (!clientLocation || !garageLocation) return;
@@ -118,10 +130,12 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
     const garageLat = garageLocation.latitude || garageLocation.coordinates[1];
     const garageLng = garageLocation.longitude || garageLocation.coordinates[0];
 
+    // Remove existing route layer
     if (routeLayerRef.current) {
       mapInstanceRef.current.removeLayer(routeLayerRef.current);
     }
 
+    // Fetch route from OSRM (Open Source Routing Machine)
     const fetchRoute = async () => {
       try {
         const response = await fetch(
@@ -142,6 +156,7 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
             }
           }).addTo(mapInstanceRef.current);
           
+          // Add distance and duration popup
           const distance = (route.distance / 1000).toFixed(1);
           const duration = Math.round(route.duration / 60);
           
@@ -165,8 +180,9 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
     fetchRoute();
   }, [clientLocation, garageLocation, mapLoaded]);
 
+  // Calculate distance between two points
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -186,15 +202,16 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
     : null;
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div 
         ref={mapRef} 
-        className="w-full h-64 md:h-80 rounded-lg shadow-inner border border-gray-200"
-        style={{ minHeight: '300px' }}
+        className="w-full h-64 md:h-80 rounded-lg shadow-inner border border-gray-200 z-0"
+        style={{ minHeight: '300px', zIndex: 0 }}
       />
       
+      {/* Distance Badge - Lower z-index to stay within map */}
       {distance && (
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md z-[1000]">
+        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md z-10">
           <div className="flex items-center gap-2 text-sm">
             <svg className="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -205,7 +222,8 @@ const LiveMap = ({ clientLocation, garageLocation, isActive = false }) => {
         </div>
       )}
       
-      <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md z-[1000] text-xs">
+      {/* Legend - Lower z-index to stay within map */}
+      <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md z-10 text-xs">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
