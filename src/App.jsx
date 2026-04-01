@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import ClientDashboard from './pages/ClientDashboard';
 import GarageDashboard from './pages/GarageDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   const { isAuthenticated, isClient, isGarage, isAdmin, loading } = useAuth();
@@ -25,90 +26,96 @@ function App() {
   return (
     <Layout>
       <Routes>
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             !isAuthenticated ? <LoginPage /> : <Navigate to="/" />
-          } 
+          }
         />
-        <Route 
-          path="/register" 
+        <Route
+          path="/register"
           element={
             !isAuthenticated ? <RegisterPage /> : <Navigate to="/" />
-          } 
+          }
         />
 
         {/* Client Routes */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             isAuthenticated ? (
-              isClient ? <ClientDashboard /> : 
-              isGarage ? <GarageDashboard /> : 
-              isAdmin ? <AdminDashboard /> : 
-              <Navigate to="/login" />
+              isClient ? <ClientDashboard /> :
+                isGarage ? <GarageDashboard /> :
+                  isAdmin ? <AdminDashboard /> :
+                    <Navigate to="/login" />
             ) : (
               <Navigate to="/login" />
             )
-          } 
+          }
         />
-        
-        <Route 
-          path="/history" 
+
+        <Route
+          path="/history"
           element={
             isAuthenticated && isClient ? <ClientDashboard /> : <Navigate to="/" />
-          } 
-        />
-        
-        <Route 
-          path="/garages" 
-          element={
-            isAuthenticated && (isClient || isAdmin) ? 
-              (isClient ? <ClientDashboard /> : <AdminDashboard />) : 
-              <Navigate to="/" />
-          } 
+          }
         />
 
-        <Route 
-          path="/my-jobs" 
+        <Route
+          path="/garages"
+          element={
+            isAuthenticated && (isClient || isAdmin) ?
+              (isClient ? <ClientDashboard /> : <AdminDashboard />) :
+              <Navigate to="/" />
+          }
+        />
+
+        <Route
+          path="/my-jobs"
           element={
             isAuthenticated && isGarage ? <GarageDashboard /> : <Navigate to="/" />
-          } 
+          }
         />
 
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
-          } 
+          }
         />
-        
-        <Route 
-          path="/users" 
+
+        <Route
+          path="/users"
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
-          } 
+          }
         />
-        
-        <Route 
-          path="/admin/garages" 
+
+        <Route
+          path="/admin/garages"
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
-          } 
+          }
         />
-        
-        <Route 
-          path="/jobs" 
+
+        <Route
+          path="/jobs"
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
-          } 
+          }
         />
-        
-        <Route 
-          path="/vehicles" 
+
+        <Route
+          path="/vehicles"
           element={
             isAuthenticated && isAdmin ? <AdminDashboard /> : <Navigate to="/" />
-          } 
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />
+          }
         />
 
         <Route path="*" element={<Navigate to="/" />} />
