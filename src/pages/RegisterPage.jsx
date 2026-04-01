@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signOutGoogle } from '../config/firebase';
+import { useAuth } from '../context/AuthContext';
 
 const RegisterPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { register } = useAuth();
-  
+  const { register, googleLogin } = useAuth();
+
   // Check if coming from Google Sign-In
   const googleUser = location.state?.googleUser;
   const isGoogleSignUp = location.state?.isGoogleSignUp;
-  
+
   const [formData, setFormData] = useState({
     fullName: googleUser?.fullName || '',
     phone: '',
@@ -20,7 +21,7 @@ const RegisterPage = () => {
     confirmPassword: '',
     role: 'client',
   });
-  
+
   const [businessDetails, setBusinessDetails] = useState({
     businessName: '',
     licenseNumber: '',
@@ -31,7 +32,7 @@ const RegisterPage = () => {
     },
     services: []
   });
-  
+
   const [showBusinessFields, setShowBusinessFields] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,46 +67,55 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Skip password validation for Google users (they'll create password later or use Google only)
+
     if (!isGoogleUser) {
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match');
         return;
       }
-      
+
       if (formData.password.length < 6) {
         setError('Password must be at least 6 characters');
         return;
       }
     }
-    
+
     setIsLoading(true);
     setError('');
-    
-    const userData = {
-      fullName: formData.fullName,
-      phone: formData.phone,
-      email: formData.email,
-      // For Google users, generate a random password or use Google ID
-      password: isGoogleUser ? `google_${Date.now()}` : formData.password,
-    };
-    
-    const businessData = formData.role === 'garage' ? businessDetails : null;
-    
-    const result = await register(userData, businessData);
-    
-    if (result.success) {
-      // Clear Google sign-out if needed
-      if (isGoogleUser) {
-        // Optional: sign out from Firebase after backend registration
-        // await signOutGoogle();
+
+    if (isGoogleUser && googleUser) {
+      const result = await googleLogin(googleUser.idToken, {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        role: formData.role,
+        businessDetails: formData.role === 'garage' ? businessDetails : undefined,
+      });
+
+      if (result.success) {
+        navigate('/');
+      } else {
+        setError(result.error);
       }
-      navigate('/');
     } else {
-      setError(result.error);
+      const userData = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      const businessData = formData.role === 'garage' ? businessDetails : null;
+
+      const result = await register(userData, businessData);
+
+      if (result.success) {
+        navigate('/');
+      } else {
+        setError(result.error);
+      }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -138,11 +148,11 @@ const RegisterPage = () => {
             {isGoogleUser ? 'Complete Your Profile' : 'Create Account'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {isGoogleUser 
+            {isGoogleUser
               ? `Welcome ${googleUser?.fullName || ''}! Please complete your registration.`
               : 'Join Roadside Rescue today'}
           </p>
-          
+
           {/* Google Sign-Up Banner */}
           {isGoogleUser && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
@@ -176,7 +186,7 @@ const RegisterPage = () => {
               </div>
             </div>
           )}
-          
+
           {/* Role Selection */}
           <div className="space-y-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -186,24 +196,22 @@ const RegisterPage = () => {
               <button
                 type="button"
                 onClick={() => handleRoleChange('client')}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all ${
-                  formData.role === 'client'
-                    ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
-                    : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
-                }`}
+                className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all ${formData.role === 'client'
+                  ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
+                  : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
+                  }`}
               >
-                 Stranded Driver
+                Stranded Driver
               </button>
               <button
                 type="button"
                 onClick={() => handleRoleChange('garage')}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all ${
-                  formData.role === 'garage'
-                    ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
-                    : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
-                }`}
+                className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all ${formData.role === 'garage'
+                  ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
+                  : 'border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50/30'
+                  }`}
               >
-                 Garage Owner
+                Garage Owner
               </button>
             </div>
           </div>
@@ -211,7 +219,7 @@ const RegisterPage = () => {
           {/* User Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Full Name *
@@ -226,7 +234,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number *
@@ -241,7 +249,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address *
@@ -262,7 +270,7 @@ const RegisterPage = () => {
                 </p>
               )}
             </div>
-            
+
             {!isGoogleUser && (
               <>
                 <div>
@@ -279,7 +287,7 @@ const RegisterPage = () => {
                     onChange={handleChange}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Confirm Password *
@@ -296,11 +304,11 @@ const RegisterPage = () => {
                 </div>
               </>
             )}
-            
+
             {isGoogleUser && (
               <div className="p-3 bg-blue-50 rounded-lg">
                 <p className="text-xs text-blue-700">
-                   You're signing up with Google. You'll be able to set a password later from your profile settings.
+                  You're signing up with Google. You'll be able to set a password later from your profile settings.
                 </p>
               </div>
             )}
@@ -310,7 +318,7 @@ const RegisterPage = () => {
           {showBusinessFields && (
             <div className="space-y-4 border-t border-gray-200 pt-4 animate-fade-in">
               <h3 className="text-lg font-medium text-gray-900">Business Information</h3>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Name *
@@ -325,7 +333,7 @@ const RegisterPage = () => {
                   onChange={handleBusinessChange}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   License Number *
@@ -340,7 +348,7 @@ const RegisterPage = () => {
                   onChange={handleBusinessChange}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Phone *
@@ -355,7 +363,7 @@ const RegisterPage = () => {
                   onChange={handleBusinessChange}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Address *
