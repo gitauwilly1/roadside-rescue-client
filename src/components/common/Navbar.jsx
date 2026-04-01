@@ -21,7 +21,12 @@ const Navbar = () => {
     return '/login';
   };
 
-  const getBusinessName = () => {
+  const getDisplayName = () => {
+    if (isGarage && garage) return garage.businessName;
+    return user?.fullName?.split(' ')[0] || 'User';
+  };
+
+  const getFullName = () => {
     if (isGarage && garage) return garage.businessName;
     return user?.fullName || 'User';
   };
@@ -49,6 +54,7 @@ const Navbar = () => {
             <span className="font-bold text-xl tracking-tight">Roadside Rescue</span>
           </Link>
 
+          {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
@@ -137,17 +143,21 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated && (
               <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-white">{getBusinessName()}</p>
+                <Link to="/profile" className="text-sm font-medium text-white hover:underline transition-colors">
+                  {getDisplayName()}
+                </Link>
                 <p className="text-xs text-red-100 capitalize">{user?.role}</p>
               </div>
             )}
             
-            <button
-              onClick={handleLogout}
-              className="hidden md:block px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-all duration-200"
-            >
-              Logout
-            </button>
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="hidden md:block px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-all duration-200"
+              >
+                Logout
+              </button>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -165,14 +175,16 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div className={`md:hidden transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className={`md:hidden transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="py-4 space-y-2 border-t border-white/20">
             {isAuthenticated ? (
               <>
                 {/* Mobile User Info */}
                 <div className="px-3 py-2 mb-2 border-b border-white/20">
-                  <p className="font-medium text-white">{getBusinessName()}</p>
-                  <p className="text-xs text-red-100 capitalize">{user?.role}</p>
+                  <Link to="/profile" onClick={closeMobileMenu} className="block">
+                    <p className="font-medium text-white">{getFullName()}</p>
+                    <p className="text-xs text-red-100 capitalize">{user?.role}</p>
+                  </Link>
                 </div>
                 
                 {isClient && (
@@ -257,9 +269,18 @@ const Navbar = () => {
                     </Link>
                   </>
                 )}
+                
+                <Link 
+                  to="/profile" 
+                  onClick={closeMobileMenu}
+                  className="block px-3 py-2 mt-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors border-t border-white/20 pt-3"
+                >
+                   Profile Settings
+                </Link>
+                
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 mt-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
+                  className="w-full text-left px-3 py-2 mt-1 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
                 >
                   Logout
                 </button>
