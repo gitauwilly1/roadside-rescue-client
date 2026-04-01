@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
 import useForm from '../hooks/useForm';
 import useDebounce from '../hooks/useDebounce';
+import AnalyticsCards from '../components/admin/AnalyticsCards';
 
 const AdminDashboard = () => {
   const { user } = useAuth();

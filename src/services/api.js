@@ -106,7 +106,6 @@ export const garage = {
   updateJobStatus: (jobId, status) => api.patch(`/garage/jobs/${jobId}/status`, { status }),
 };
 
-
 export const admin = {
   getUsers: (params) => api.get('/admin/users', { params }),
   getUser: (userId) => api.get(`/admin/users/${userId}`),
@@ -118,10 +117,13 @@ export const admin = {
   verifyGarage: (garageId, isVerified) => api.patch(`/admin/garages/${garageId}/verify`, { isVerified }),
   
   getJobs: (params) => api.get('/admin/jobs', { params }),
+  deleteJob: (jobId, data) => api.delete(`/admin/jobs/${jobId}`, { data }),
   getStats: () => api.get('/admin/stats'),
   
   getVehicles: () => api.get('/admin/vehicles'),
+  deleteVehicle: (vehicleId) => api.delete(`/admin/vehicles/${vehicleId}`),
   getFavorites: () => api.get('/admin/favorites'),
+  deleteReview: (reviewId) => api.delete(`/admin/reviews/${reviewId}`),
   getNotificationPreferences: () => api.get('/admin/notifications/preferences'),
 };
 
