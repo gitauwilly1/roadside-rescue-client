@@ -189,30 +189,32 @@ const ClientDashboard = () => {
       )}
 
       {/* Live Map Section - Shows during active job */}
-      {activeJob && activeJob.status !== 'completed' && userLocation && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="bg-white rounded-xl shadow-lg p-4">
-            <div className="mb-3 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900">Live Tracking</h3>
-              {garageLocation && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
-                   Garage en route
-                </span>
-              )}
-            </div>
-            <LiveMap
-              clientLocation={userLocation}
-              garageLocation={garageLocation}
-              isActive={true}
-            />
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              {garageLocation 
-                ? ' Garage is on the move - tracking in real-time' 
-                : ' Waiting for garage to start moving...'}
-            </p>
-          </div>
-        </div>
-      )}
+{activeJob && activeJob.status !== 'completed' && userLocation && (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 relative z-0">
+    <div className="bg-white rounded-xl shadow-lg p-4">
+      <div className="mb-3 flex justify-between items-center">
+        <h3 className="font-semibold text-gray-900">Live Tracking</h3>
+        {garageLocation && (
+          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
+             Garage en route
+          </span>
+        )}
+      </div>
+      <div className="relative z-0">
+        <LiveMap
+          clientLocation={userLocation}
+          garageLocation={garageLocation}
+          isActive={true}
+        />
+      </div>
+      <p className="text-xs text-gray-500 mt-3 text-center">
+        {garageLocation 
+          ? ' Garage is on the move - tracking in real-time' 
+          : ' Waiting for garage to start moving...'}
+      </p>
+    </div>
+  </div>
+)}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
