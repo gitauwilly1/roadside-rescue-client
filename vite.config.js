@@ -15,7 +15,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'false',
+    minify: false,
     target: 'es2015'
+  },
+  css: {
+    postcss: {
+      plugins: [
+        require('@tailwindcss/line-clamp'),
+      ]
+    }
   }
 })
