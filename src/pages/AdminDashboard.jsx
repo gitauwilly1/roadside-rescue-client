@@ -8,9 +8,10 @@ import {
   FaChartLine, FaUsers, FaBuilding, FaClipboardList, FaCar, 
   FaSearch, FaUser, FaPhone, FaEnvelope, FaToggleOn, FaToggleOff,
   FaCheckCircle, FaTimesCircle, FaTrash, FaUserCheck, FaUserTimes,
-  FaStar, FaCalendarAlt, FaLicense, FaMapMarkerAlt
+  FaStar, FaCalendarAlt, FaLicense, FaMapMarkerAlt, FaStarHalfAlt,
+  FaRegStar, FaComment, FaFilter
 } from 'react-icons/fa';
-import { MdVerified, MdPending } from 'react-icons/md';
+import { MdVerified, MdPending, MdRateReview } from 'react-icons/md';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -21,10 +22,14 @@ const AdminDashboard = () => {
   const [garages, setGarages] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [ratingFilter, setRatingFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [reviewsPagination, setReviewsPagination] = useState({ total: 0, page: 1, pages: 1, limit: 20 });
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   useEffect(() => {
@@ -37,6 +42,8 @@ const AdminDashboard = () => {
       setActiveSection('jobs');
     } else if (path === '/vehicles') {
       setActiveSection('vehicles');
+    } else if (path === '/reviews') {
+      setActiveSection('reviews');
     } else {
       setActiveSection('stats');
     }
@@ -51,9 +58,15 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (activeSection === 'reviews') {
+      loadReviews();
+    }
+  }, [activeSection, reviewsPagination.page, ratingFilter]);
+
+  useEffect(() => {
     if (debouncedSearch) {
       filterData();
-    } else {
+    } else if (activeSection !== 'reviews') {
       loadUsers();
       loadGarages();
       loadJobs();
@@ -103,6 +116,49 @@ const AdminDashboard = () => {
       setVehicles(response.data.vehicles);
     } catch (err) {
       console.error('Failed to load vehicles:', err);
+    }
+  };
+
+  const loadReviews = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        limit: reviewsPagination.limit,
+        page: reviewsPagination.page
+      };
+      if (ratingFilter) params.rating = ratingFilter;
+      
+      const response = await admin.getReviews(params);
+      setReviews(response.data.reviews);
+      setReviewsPagination({
+        total: response.data.pagination.total,
+        page: response.data.pagination.page,
+        pages: response.data.pagination.pages,
+        limit: response.data.pagination.limit
+      });
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+      setError('Failed to load reviews');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
+    
+    setIsLoading(true);
+    try {
+      await admin.deleteReview(reviewId);
+      setSuccess('Review deleted successfully');
+      loadReviews();
+      loadStats(); // Refresh stats to update average rating
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete review');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -221,6 +277,25 @@ const AdminDashboard = () => {
     return texts[status] || status;
   };
 
+  // Render star rating for display
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - Math.ceil(rating);
+    
+    return (
+      <div className="flex items-center gap-0.5">
+        {[...Array(fullStars)].map((_, i) => (
+          <FaStar key={`full-${i}`} className="h-3 w-3 text-yellow-500" />
+        ))}
+        {hasHalfStar && <FaStarHalfAlt className="h-3 w-3 text-yellow-500" />}
+        {[...Array(emptyStars)].map((_, i) => (
+          <FaRegStar key={`empty-${i}`} className="h-3 w-3 text-gray-300" />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Banner */}
@@ -233,6 +308,7 @@ const AdminDashboard = () => {
               {activeSection === 'garages' && <><FaBuilding className="inline" /> Garage Management</>}
               {activeSection === 'jobs' && <><FaClipboardList className="inline" /> Job Management</>}
               {activeSection === 'vehicles' && <><FaCar className="inline" /> Vehicle Management</>}
+              {activeSection === 'reviews' && <><MdRateReview className="inline" /> Review Management</>}
             </h1>
             <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
           </div>
@@ -253,6 +329,70 @@ const AdminDashboard = () => {
             {success}
           </div>
         )}
+
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
+          <button
+            onClick={() => setActiveSection('stats')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'stats'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <FaChartLine /> Dashboard
+          </button>
+          <button
+            onClick={() => setActiveSection('users')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'users'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <FaUsers /> Users
+          </button>
+          <button
+            onClick={() => setActiveSection('garages')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'garages'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <FaBuilding /> Garages
+          </button>
+          <button
+            onClick={() => setActiveSection('jobs')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'jobs'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <FaClipboardList /> Jobs
+          </button>
+          <button
+            onClick={() => setActiveSection('vehicles')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'vehicles'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <FaCar /> Vehicles
+          </button>
+          <button
+            onClick={() => setActiveSection('reviews')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'reviews'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <MdRateReview /> Reviews ({reviewsPagination.total})
+          </button>
+        </div>
 
         {/* Search Bar for Data Sections */}
         {(activeSection === 'users' || activeSection === 'garages') && (
@@ -471,11 +611,178 @@ const AdminDashboard = () => {
                           <FaTrash className="h-3 w-3" /> Delete
                         </button>
                       </td>
-                    </tr>
+                    </td>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Reviews Section */}
+        {activeSection === 'reviews' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <MdRateReview className="h-5 w-5 text-red-600" /> Review Management
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Manage and moderate customer reviews across the platform
+                </p>
+              </div>
+              
+              {/* Filter Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-colors"
+              >
+                <FaFilter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm">Filter</span>
+                {ratingFilter && <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+              </button>
+            </div>
+
+            {/* Filters Panel */}
+            {showFilters && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Rating</label>
+                    <select
+                      value={ratingFilter}
+                      onChange={(e) => {
+                        setRatingFilter(e.target.value);
+                        setReviewsPagination(prev => ({ ...prev, page: 1 }));
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <option value="">All Ratings</option>
+                      <option value="5">5 Stars ★★★★★</option>
+                      <option value="4">4 Stars ★★★★☆</option>
+                      <option value="3">3 Stars ★★★☆☆</option>
+                      <option value="2">2 Stars ★★☆☆☆</option>
+                      <option value="1">1 Star ★☆☆☆☆</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => {
+                        setRatingFilter('');
+                        setReviewsPagination(prev => ({ ...prev, page: 1 }));
+                      }}
+                      className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reviews Table */}
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                <p className="mt-2 text-gray-500">Loading reviews...</p>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <MdRateReview className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                <p>No reviews found</p>
+                <p className="text-sm mt-1">Reviews will appear here once customers submit them</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Garage</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {reviews.map((review) => (
+                      <tr key={review._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1">
+                            {renderStars(review.rating)}
+                            <span className="ml-1 text-xs text-gray-500">({review.rating})</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{review.clientId?.fullName || 'Unknown'}</p>
+                            <p className="text-xs text-gray-500">{review.clientId?.phone || 'No phone'}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{review.garageId?.businessName || 'Unknown'}</p>
+                            <p className="text-xs text-gray-500">{review.garageId?.businessPhone || 'No phone'}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="max-w-xs">
+                            <div className="flex items-start gap-1">
+                              <FaComment className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {review.comment || <span className="text-gray-400 italic">No comment</span>}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-xs text-gray-500">
+                            {review.jobId?.serviceType?.replace('_', ' ') || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => handleDeleteReview(review._id)}
+                            disabled={isLoading}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors flex items-center gap-1"
+                          >
+                            <FaTrash className="h-3 w-3" /> Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {reviewsPagination.pages > 1 && (
+              <div className="mt-6 flex justify-center gap-2">
+                <button
+                  onClick={() => setReviewsPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                  disabled={reviewsPagination.page === 1}
+                  className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-1 text-sm text-gray-600">
+                  Page {reviewsPagination.page} of {reviewsPagination.pages}
+                </span>
+                <button
+                  onClick={() => setReviewsPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
+                  disabled={reviewsPagination.page === reviewsPagination.pages}
+                  className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
