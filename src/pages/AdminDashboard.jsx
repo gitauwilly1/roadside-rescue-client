@@ -4,6 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
 import useDebounce from '../hooks/useDebounce';
 import AnalyticsCards from '../components/admin/AnalyticsCards';
+import { 
+  FaChartLine, FaUsers, FaBuilding, FaClipboardList, FaCar, 
+  FaSearch, FaUser, FaPhone, FaEnvelope, FaToggleOn, FaToggleOff,
+  FaCheckCircle, FaTimesCircle, FaTrash, FaUserCheck, FaUserTimes,
+  FaStar, FaCalendarAlt, FaLicense, FaMapMarkerAlt
+} from 'react-icons/fa';
+import { MdVerified, MdPending } from 'react-icons/md';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -220,12 +227,12 @@ const AdminDashboard = () => {
       <div className="bg-gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div>
-            <h1 className="text-2xl font-bold">
-              {activeSection === 'stats' && ' Admin Dashboard'}
-              {activeSection === 'users' && ' User Management'}
-              {activeSection === 'garages' && ' Garage Management'}
-              {activeSection === 'jobs' && ' Job Management'}
-              {activeSection === 'vehicles' && ' Vehicle Management'}
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              {activeSection === 'stats' && <><FaChartLine className="inline" /> Admin Dashboard</>}
+              {activeSection === 'users' && <><FaUsers className="inline" /> User Management</>}
+              {activeSection === 'garages' && <><FaBuilding className="inline" /> Garage Management</>}
+              {activeSection === 'jobs' && <><FaClipboardList className="inline" /> Job Management</>}
+              {activeSection === 'vehicles' && <><FaCar className="inline" /> Vehicle Management</>}
             </h1>
             <p className="text-sm text-red-100">Welcome, {user?.fullName}</p>
           </div>
@@ -252,9 +259,7 @@ const AdminDashboard = () => {
           <div className="mb-6">
             <div className="relative max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <FaSearch className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
@@ -279,9 +284,9 @@ const AdminDashboard = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaUser className="inline mr-1" /> Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaPhone className="inline mr-1" /> Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaEnvelope className="inline mr-1" /> Email</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -300,6 +305,7 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${userItem.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {userItem.isActive ? <FaCheckCircle className="inline mr-1 h-3 w-3" /> : <FaTimesCircle className="inline mr-1 h-3 w-3" />}
                           {userItem.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
@@ -307,12 +313,13 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => toggleUserStatus(userItem._id, userItem.isActive)}
                           disabled={isLoading || userItem.role === 'admin'}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${
                             userItem.isActive 
                               ? 'bg-red-100 text-red-700 hover:bg-red-200' 
                               : 'bg-green-100 text-green-700 hover:bg-green-200'
                           } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
                         >
+                          {userItem.isActive ? <FaUserTimes /> : <FaUserCheck />}
                           {userItem.isActive ? 'Deactivate' : 'Activate'}
                         </button>
                       </td>
@@ -331,9 +338,9 @@ const AdminDashboard = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaBuilding className="inline mr-1" /> Business Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaPhone className="inline mr-1" /> Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaMapMarkerAlt className="inline mr-1" /> Address</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -347,11 +354,13 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{garageItem.address}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${garageItem.isOnline ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {garageItem.isOnline ? <FaToggleOn className="inline mr-1" /> : <FaToggleOff className="inline mr-1" />}
                           {garageItem.isOnline ? 'Online' : 'Offline'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${garageItem.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {garageItem.isVerified ? <MdVerified className="inline mr-1" /> : <MdPending className="inline mr-1" />}
                           {garageItem.isVerified ? 'Verified' : 'Pending'}
                         </span>
                       </td>
@@ -383,11 +392,11 @@ const AdminDashboard = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Garage</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaClipboardList className="inline mr-1" /> Service</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaUser className="inline mr-1" /> Client</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaBuilding className="inline mr-1" /> Garage</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaCalendarAlt className="inline mr-1" /> Created</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -409,9 +418,9 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => handleDeleteJob(jobItem._id)}
                           disabled={isLoading}
-                          className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors"
+                          className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors flex items-center gap-1"
                         >
-                          Delete
+                          <FaTrash className="h-3 w-3" /> Delete
                         </button>
                       </td>
                     </tr>
@@ -429,9 +438,9 @@ const AdminDashboard = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Plate</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make & Model</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaCar className="inline mr-1" /> License Plate</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaCar className="inline mr-1" /> Make & Model</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><FaUser className="inline mr-1" /> Owner</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -444,10 +453,12 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{vehicle.make} {vehicle.model}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{vehicle.clientId?.fullName || 'Unknown'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {vehicle.isDefault ? '✓ Yes' : 'No'}
+                        {vehicle.isDefault ? <FaCheckCircle className="inline text-green-500 mr-1" /> : <FaTimesCircle className="inline text-gray-400 mr-1" />}
+                        {vehicle.isDefault ? 'Yes' : 'No'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${vehicle.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {vehicle.isActive ? <FaCheckCircle className="inline mr-1 h-3 w-3" /> : <FaTimesCircle className="inline mr-1 h-3 w-3" />}
                           {vehicle.isActive ? 'Active' : 'Deleted'}
                         </span>
                       </td>
@@ -455,9 +466,9 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => handleDeleteVehicle(vehicle._id)}
                           disabled={isLoading}
-                          className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors"
+                          className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200 transition-colors flex items-center gap-1"
                         >
-                          Delete
+                          <FaTrash className="h-3 w-3" /> Delete
                         </button>
                       </td>
                     </tr>
