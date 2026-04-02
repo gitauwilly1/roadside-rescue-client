@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    require('@tailwindcss/line-clamp'),
   ],
   server: {
     port: 5173,
