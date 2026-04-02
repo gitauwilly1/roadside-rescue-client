@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { client, garage } from '../services/api';
 import useForm from '../hooks/useForm';
+import { 
+  FaUser, FaPhone, FaEnvelope, FaBuilding, FaMapMarkerAlt, 
+  FaLock, FaBell, FaShieldAlt, FaCheckCircle, FaTimesCircle,
+  FaEnvelopeOpen, FaSms, FaSync, FaTag, FaSave, FaIdCard,
+  FaGoogle
+} from 'react-icons/fa';
+import { MdVerified } from 'react-icons/md';
 
 const ProfilePage = () => {
     const { user, garage: garageProfile, isClient, isGarage } = useAuth();
@@ -154,45 +161,45 @@ const ProfilePage = () => {
                 )}
 
                 {/* Tab Navigation */}
-                <div className="flex gap-2 mb-6 border-b border-gray-200">
+                <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
                     <button
                         onClick={() => setActiveTab('profile')}
-                        className={`px-6 py-3 font-medium rounded-t-lg transition-all ${activeTab === 'profile'
+                        className={`px-6 py-3 font-medium rounded-t-lg transition-all flex items-center gap-2 ${activeTab === 'profile'
                             ? 'text-red-600 border-b-2 border-red-600 bg-white'
                             : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
                             }`}
                     >
-                        Profile
+                        <FaUser /> Profile
                     </button>
                     {isGarage && (
                         <button
                             onClick={() => setActiveTab('garage')}
-                            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${activeTab === 'garage'
+                            className={`px-6 py-3 font-medium rounded-t-lg transition-all flex items-center gap-2 ${activeTab === 'garage'
                                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
                                 }`}
                         >
-                            Garage Info
+                            <FaBuilding /> Garage Info
                         </button>
                     )}
                     <button
                         onClick={() => setActiveTab('security')}
-                        className={`px-6 py-3 font-medium rounded-t-lg transition-all ${activeTab === 'security'
+                        className={`px-6 py-3 font-medium rounded-t-lg transition-all flex items-center gap-2 ${activeTab === 'security'
                             ? 'text-red-600 border-b-2 border-red-600 bg-white'
                             : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
                             }`}
                     >
-                        Security
+                        <FaShieldAlt /> Security
                     </button>
                     {isClient && (
                         <button
                             onClick={() => setActiveTab('notifications')}
-                            className={`px-6 py-3 font-medium rounded-t-lg transition-all ${activeTab === 'notifications'
+                            className={`px-6 py-3 font-medium rounded-t-lg transition-all flex items-center gap-2 ${activeTab === 'notifications'
                                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
                                 }`}
                         >
-                            Notifications
+                            <FaBell /> Notifications
                         </button>
                     )}
                 </div>
@@ -200,13 +207,13 @@ const ProfilePage = () => {
                 {/* Profile Tab */}
                 {activeTab === 'profile' && (
                     <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"><FaUser /> Personal Information</h2>
 
                         <form onSubmit={(e) => { e.preventDefault(); handleProfileSubmit(handleUpdateProfile); }}>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Full Name
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <FaUser className="h-4 w-4" /> Full Name
                                     </label>
                                     <input
                                         type="text"
@@ -218,8 +225,8 @@ const ProfilePage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Phone Number
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <FaPhone className="h-4 w-4" /> Phone Number
                                     </label>
                                     <input
                                         type="tel"
@@ -231,8 +238,8 @@ const ProfilePage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Email Address
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <FaEnvelope className="h-4 w-4" /> Email Address
                                     </label>
                                     <input
                                         type="email"
@@ -246,9 +253,9 @@ const ProfilePage = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="btn-primary px-6 py-2"
+                                    className="btn-primary px-6 py-2 flex items-center gap-2"
                                 >
-                                    {isLoading ? 'Saving...' : 'Save Changes'}
+                                    <FaSave /> {isLoading ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
                         </form>
@@ -258,13 +265,13 @@ const ProfilePage = () => {
                 {/* Garage Info Tab */}
                 {activeTab === 'garage' && isGarage && (
                     <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"><FaBuilding /> Business Information</h2>
 
                         <form onSubmit={(e) => { e.preventDefault(); handleGarageSubmit(handleUpdateGarageProfile); }}>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Business Name
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <FaBuilding className="h-4 w-4" /> Business Name
                                     </label>
                                     <input
                                         type="text"
@@ -276,8 +283,8 @@ const ProfilePage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Business Phone
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <FaPhone className="h-4 w-4" /> Business Phone
                                     </label>
                                     <input
                                         type="tel"
@@ -289,8 +296,8 @@ const ProfilePage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Business Address
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <FaMapMarkerAlt className="h-4 w-4" /> Business Address
                                     </label>
                                     <input
                                         type="text"
@@ -302,15 +309,17 @@ const ProfilePage = () => {
                                 </div>
 
                                 <div className="p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                                        <FaIdCard className="h-4 w-4" />
                                         <span className="font-medium">License Number:</span> {garageProfile?.licenseNumber}
                                     </p>
-                                    <p className="text-sm text-gray-600 mt-1">
+                                    <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                                        <MdVerified className="h-4 w-4" />
                                         <span className="font-medium">Verification Status:</span>{' '}
                                         {garageProfile?.isVerified ? (
-                                            <span className="text-green-600">✓ Verified</span>
+                                            <span className="text-green-600 flex items-center gap-1"><FaCheckCircle className="h-3 w-3" /> Verified</span>
                                         ) : (
-                                            <span className="text-yellow-600">Pending Verification</span>
+                                            <span className="text-yellow-600 flex items-center gap-1"><FaTimesCircle className="h-3 w-3" /> Pending Verification</span>
                                         )}
                                     </p>
                                 </div>
@@ -318,9 +327,9 @@ const ProfilePage = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="btn-primary px-6 py-2"
+                                    className="btn-primary px-6 py-2 flex items-center gap-2"
                                 >
-                                    {isLoading ? 'Saving...' : 'Save Changes'}
+                                    <FaSave /> {isLoading ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
                         </form>
@@ -330,17 +339,15 @@ const ProfilePage = () => {
                 {/* Security Tab */}
                 {activeTab === 'security' && (
                     <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"><FaShieldAlt /> Change Password</h2>
 
                         {isLikelyGoogleUser ? (
                             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                                 <div className="flex items-start gap-3">
-                                    <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
+                                    <FaGoogle className="h-5 w-5 text-blue-600 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-medium text-blue-800">
-                                            🔐 Google Account Detected
+                                        <p className="text-sm font-medium text-blue-800 flex items-center gap-1">
+                                            <FaLock className="h-3 w-3" /> Google Account Detected
                                         </p>
                                         <p className="text-xs text-blue-700 mt-1">
                                             You signed up with Google. Password changes are managed through your Google Account settings.
@@ -385,9 +392,9 @@ const ProfilePage = () => {
                                     <button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="btn-primary px-6 py-2"
+                                        className="btn-primary px-6 py-2 flex items-center gap-2"
                                     >
-                                        {isLoading ? 'Updating...' : 'Update Password'}
+                                        <FaLock /> {isLoading ? 'Updating...' : 'Update Password'}
                                     </button>
                                 </div>
                             </form>
@@ -398,13 +405,13 @@ const ProfilePage = () => {
                 {/* Notifications Tab */}
                 {activeTab === 'notifications' && isClient && (
                     <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Notification Preferences</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"><FaBell /> Notification Preferences</h2>
                         <p className="text-sm text-gray-500 mb-4">Choose how you want to be notified</p>
 
                         <div className="space-y-4">
                             <div className="flex items-center justify-between py-2 border-b border-gray-100">
                                 <div>
-                                    <p className="font-medium text-gray-900">Email Notifications</p>
+                                    <p className="font-medium text-gray-900 flex items-center gap-2"><FaEnvelopeOpen /> Email Notifications</p>
                                     <p className="text-xs text-gray-500">Receive updates via email</p>
                                 </div>
                                 <button
@@ -421,7 +428,7 @@ const ProfilePage = () => {
 
                             <div className="flex items-center justify-between py-2 border-b border-gray-100">
                                 <div>
-                                    <p className="font-medium text-gray-900">SMS Notifications</p>
+                                    <p className="font-medium text-gray-900 flex items-center gap-2"><FaSms /> SMS Notifications</p>
                                     <p className="text-xs text-gray-500">Receive text message alerts</p>
                                 </div>
                                 <button
@@ -438,7 +445,7 @@ const ProfilePage = () => {
 
                             <div className="flex items-center justify-between py-2 border-b border-gray-100">
                                 <div>
-                                    <p className="font-medium text-gray-900">Job Status Updates</p>
+                                    <p className="font-medium text-gray-900 flex items-center gap-2"><FaSync /> Job Status Updates</p>
                                     <p className="text-xs text-gray-500">Get notified when job status changes</p>
                                 </div>
                                 <button
@@ -455,7 +462,7 @@ const ProfilePage = () => {
 
                             <div className="flex items-center justify-between py-2 border-b border-gray-100">
                                 <div>
-                                    <p className="font-medium text-gray-900">Promotional Offers</p>
+                                    <p className="font-medium text-gray-900 flex items-center gap-2"><FaTag /> Promotional Offers</p>
                                     <p className="text-xs text-gray-500">Receive special offers and discounts</p>
                                 </div>
                                 <button
@@ -473,9 +480,9 @@ const ProfilePage = () => {
                             <button
                                 onClick={handleUpdateNotifications}
                                 disabled={isLoadingPrefs}
-                                className="mt-4 btn-primary px-6 py-2"
+                                className="mt-4 btn-primary px-6 py-2 flex items-center gap-2"
                             >
-                                {isLoadingPrefs ? 'Saving...' : 'Save Preferences'}
+                                <FaSave /> {isLoadingPrefs ? 'Saving...' : 'Save Preferences'}
                             </button>
                         </div>
                     </div>
