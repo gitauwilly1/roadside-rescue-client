@@ -9,6 +9,13 @@ import JobAlert from '../components/garage/JobAlert';
 import GarageJobCard from '../components/garage/GarageJobCard';
 import OnlineToggle from '../components/garage/OnlineToggle';
 import GarageMap from '../components/garage/GarageMap';
+import { 
+  FaCar, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, 
+  FaWrench, FaClock, FaMapMarkerAlt, FaPhoneAlt, FaStar 
+} from 'react-icons/fa';
+import { MdLocationOn, MdVerified } from 'react-icons/md';
+import { BiCurrentLocation } from 'react-icons/bi';
+import { HiOutlineStatusOnline, HiOutlineStatusOffline } from 'react-icons/hi';
 
 const GarageDashboard = () => {
   const { user, garage: garageProfile } = useAuth();
@@ -281,7 +288,7 @@ const GarageDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'available' ? ' Emergency Rescue Requests' : ' My Assigned Jobs'}
+                {activeSection === 'available' ? '🚨 Emergency Rescue Requests' : '📋 My Assigned Jobs'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
@@ -311,14 +318,12 @@ const GarageDashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="animate-pulse">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+                  <BiCurrentLocation className="h-5 w-5" />
                 </div>
                 <span className="text-sm font-medium">
-                  {activeJob.status === 'accepted' && ' Location sharing will start when you mark as En Route'}
-                  {activeJob.status === 'en_route' && ' Location sharing active - Client can see your location'}
-                  {activeJob.status === 'in_progress' && ' Service in progress - Location sharing active'}
+                  {activeJob.status === 'accepted' && '📍 Location sharing will start when you mark as En Route'}
+                  {activeJob.status === 'en_route' && '📍 Location sharing active - Client can see your location'}
+                  {activeJob.status === 'in_progress' && '🔧 Service in progress - Location sharing active'}
                 </span>
               </div>
               <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
@@ -340,7 +345,7 @@ const GarageDashboard = () => {
               </div>
               {activeJob.status === 'en_route' && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
-                   En Route
+                  <FaCar className="inline mr-1 h-3 w-3" /> En Route
                 </span>
               )}
             </div>
@@ -355,9 +360,7 @@ const GarageDashboard = () => {
             {navigationInfo && (
               <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-blue-800">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <FaInfoCircle className="h-5 w-5" />
                   <span>
                     Drive approximately <strong>{navigationInfo.distance} km</strong> - 
                     Estimated <strong>{navigationInfo.duration} minutes</strong>
@@ -381,12 +384,13 @@ const GarageDashboard = () => {
               <p className="font-medium text-gray-900">Service Status</p>
               <p className={`text-sm ${isOnline ? 'text-green-700' : 'text-gray-600'}`}>
                 {isOnline 
-                  ? ' You are online. Real-time job alerts are active.' 
-                  : ' You are offline. Go online to receive emergency requests.'}
+                  ? <><HiOutlineStatusOnline className="inline mr-1" /> You are online. Real-time job alerts are active.</>
+                  : <><HiOutlineStatusOffline className="inline mr-1" /> You are offline. Go online to receive emergency requests.</>
+                }
               </p>
             </div>
             <div className={`text-2xl ${isOnline ? 'text-green-600' : 'text-gray-500'}`}>
-              {isOnline ? '🟢' : '⚫'}
+              {isOnline ? <HiOutlineStatusOnline /> : <HiOutlineStatusOffline />}
             </div>
           </div>
         </div>
@@ -411,7 +415,7 @@ const GarageDashboard = () => {
             
             {!isOnline && (
               <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-700"> You are offline. Go online to accept emergency requests and receive real-time alerts.</p>
+                <p className="text-yellow-700"><FaExclamationTriangle className="inline mr-1" /> You are offline. Go online to accept emergency requests and receive real-time alerts.</p>
               </div>
             )}
             
