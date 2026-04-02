@@ -98,7 +98,7 @@ const GarageJobCard = ({ job, onStatusUpdate, isOnline = true, isLoading = false
             disabled={isLoading || !isOnline}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
           >
-            🚨 Accept Emergency
+             Accept Emergency
           </button>
         </div>
       )}
