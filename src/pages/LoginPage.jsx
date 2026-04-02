@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithGoogle, handleRedirectResult, signOutGoogle } from '../config/firebase';
+import { FaCheckCircle } from 'react-icons/fa';
 
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
@@ -254,21 +255,15 @@ useEffect(() => {
         <div className="text-center pt-4">
           <div className="flex justify-center gap-6 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <FaCheckCircle className="h-4 w-4 text-red-500" />
               24/7 Support
             </span>
             <span className="flex items-center gap-1">
-              <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <FaCheckCircle className="h-4 w-4 text-red-500" />
               Verified Garages
             </span>
             <span className="flex items-center gap-1">
-              <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <FaCheckCircle className="h-4 w-4 text-red-500" />
               Real-time Tracking
             </span>
           </div>
