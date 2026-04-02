@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { admin } from '../services/api';
 import useDebounce from '../hooks/useDebounce';
 import AnalyticsCards from '../components/admin/AnalyticsCards';
-import { 
-  FaChartLine, FaUsers, FaBuilding, FaClipboardList, FaCar, 
+import {
+  FaChartLine, FaUsers, FaBuilding, FaClipboardList, FaCar,
   FaSearch, FaUser, FaPhone, FaEnvelope, FaToggleOn, FaToggleOff,
   FaCheckCircle, FaTimesCircle, FaTrash, FaUserCheck, FaUserTimes,
   FaStar, FaCalendarAlt, FaLicense, FaMapMarkerAlt, FaStarHalfAlt,
@@ -127,7 +127,7 @@ const AdminDashboard = () => {
         page: reviewsPagination.page
       };
       if (ratingFilter) params.rating = ratingFilter;
-      
+
       const response = await admin.getReviews(params);
       setReviews(response.data.reviews);
       setReviewsPagination({
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
 
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
-    
+
     setIsLoading(true);
     try {
       await admin.deleteReview(reviewId);
@@ -164,14 +164,14 @@ const AdminDashboard = () => {
 
   const filterData = () => {
     if (activeSection === 'users') {
-      const filtered = users.filter(user => 
+      const filtered = users.filter(user =>
         user.fullName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         user.phone?.includes(debouncedSearch) ||
         user.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
       setUsers(filtered);
     } else if (activeSection === 'garages') {
-      const filtered = garages.filter(garage => 
+      const filtered = garages.filter(garage =>
         garage.businessName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         garage.businessPhone?.includes(debouncedSearch) ||
         garage.address?.toLowerCase().includes(debouncedSearch.toLowerCase())
@@ -212,7 +212,7 @@ const AdminDashboard = () => {
 
   const handleDeleteJob = async (jobId) => {
     if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) return;
-    
+
     setIsLoading(true);
     try {
       await admin.deleteJob(jobId);
@@ -229,7 +229,7 @@ const AdminDashboard = () => {
 
   const handleDeleteVehicle = async (vehicleId) => {
     if (!window.confirm('Are you sure you want to permanently delete this vehicle? This action cannot be undone.')) return;
-    
+
     setIsLoading(true);
     try {
       await admin.deleteVehicle(vehicleId);
@@ -282,7 +282,7 @@ const AdminDashboard = () => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
     const emptyStars = 5 - Math.ceil(rating);
-    
+
     return (
       <div className="flex items-center gap-0.5">
         {[...Array(fullStars)].map((_, i) => (
@@ -323,7 +323,7 @@ const AdminDashboard = () => {
             {error}
           </div>
         )}
-        
+
         {success && (
           <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg">
             {success}
@@ -334,61 +334,55 @@ const AdminDashboard = () => {
         <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveSection('stats')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeSection === 'stats'
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeSection === 'stats'
                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
+              }`}
           >
             <FaChartLine /> Dashboard
           </button>
           <button
             onClick={() => setActiveSection('users')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeSection === 'users'
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeSection === 'users'
                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
+              }`}
           >
             <FaUsers /> Users
           </button>
           <button
             onClick={() => setActiveSection('garages')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeSection === 'garages'
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeSection === 'garages'
                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
+              }`}
           >
             <FaBuilding /> Garages
           </button>
           <button
             onClick={() => setActiveSection('jobs')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeSection === 'jobs'
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeSection === 'jobs'
                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
+              }`}
           >
             <FaClipboardList /> Jobs
           </button>
           <button
             onClick={() => setActiveSection('vehicles')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeSection === 'vehicles'
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeSection === 'vehicles'
                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
+              }`}
           >
             <FaCar /> Vehicles
           </button>
           <button
             onClick={() => setActiveSection('reviews')}
-            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeSection === 'reviews'
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeSection === 'reviews'
                 ? 'text-red-600 border-b-2 border-red-600 bg-white'
                 : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
-            }`}
+              }`}
           >
             <MdRateReview /> Reviews ({reviewsPagination.total})
           </button>
@@ -453,11 +447,10 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => toggleUserStatus(userItem._id, userItem.isActive)}
                           disabled={isLoading || userItem.role === 'admin'}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${
-                            userItem.isActive 
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all flex items-center gap-1 ${userItem.isActive
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
                               : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
+                            } ${(isLoading || userItem.role === 'admin') && 'opacity-50 cursor-not-allowed'}`}
                         >
                           {userItem.isActive ? <FaUserTimes /> : <FaUserCheck />}
                           {userItem.isActive ? 'Deactivate' : 'Activate'}
@@ -508,11 +501,10 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => verifyGarage(garageItem._id, garageItem.isVerified)}
                           disabled={isLoading}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                            garageItem.isVerified 
-                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
+                          className={`px-3 py-1 rounded text-xs font-medium transition-all ${garageItem.isVerified
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                               : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          } ${isLoading && 'opacity-50 cursor-not-allowed'}`}
+                            } ${isLoading && 'opacity-50 cursor-not-allowed'}`}
                         >
                           {garageItem.isVerified ? 'Unverify' : 'Verify'}
                         </button>
@@ -571,7 +563,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-                {/* Vehicles Section with Delete */}
+        {/* Vehicles Section with Delete */}
         {activeSection === 'vehicles' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -631,7 +623,7 @@ const AdminDashboard = () => {
                   Manage and moderate customer reviews across the platform
                 </p>
               </div>
-              
+
               {/* Filter Button */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -731,8 +723,12 @@ const AdminDashboard = () => {
                           <div className="max-w-xs">
                             <div className="flex items-start gap-1">
                               <FaComment className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <p className="text-sm text-gray-600 line-clamp-2">
-                                {review.comment || <span className="text-gray-400 italic">No comment</span>}
+                              <p className="text-sm text-gray-600">
+                                {review.comment ? (
+                                  review.comment.length > 100 ? review.comment.substring(0, 100) + '...' : review.comment
+                                ) : (
+                                  <span className="text-gray-400 italic">No comment</span>
+                                )}
                               </p>
                             </div>
                           </div>
