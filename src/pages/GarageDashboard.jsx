@@ -11,9 +11,11 @@ import OnlineToggle from '../components/garage/OnlineToggle';
 import GarageMap from '../components/garage/GarageMap';
 import { 
   FaCar, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, 
-  FaWrench, FaClock, FaMapMarkerAlt, FaPhoneAlt, FaStar 
+  FaWrench, FaClock, FaMapMarkerAlt, FaPhoneAlt, FaStar, 
+  FaStarHalfAlt, FaRegStar, FaUser, FaCalendarAlt, FaComment,
+  FaChartBar
 } from 'react-icons/fa';
-import { MdLocationOn, MdVerified } from 'react-icons/md';
+import { MdLocationOn, MdVerified, MdRateReview } from 'react-icons/md';
 import { BiCurrentLocation } from 'react-icons/bi';
 import { HiOutlineStatusOnline, HiOutlineStatusOffline } from 'react-icons/hi';
 
@@ -32,6 +34,12 @@ const GarageDashboard = () => {
   const locationIntervalRef = useRef(null);
   const isLocationSharingRef = useRef(false);
 
+  // Reviews state
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [ratingDistribution, setRatingDistribution] = useState([]);
+  const [reviewsPagination, setReviewsPagination] = useState({ total: 0, page: 1, pages: 1 });
+
   const { location: currentLocation, getCurrentPosition, retry: retryLocation } = useGeoLocation({ 
     watch: true,
     enableHighAccuracy: true,
@@ -43,6 +51,8 @@ const GarageDashboard = () => {
     const path = routerLocation.pathname;
     if (path === '/my-jobs') {
       setActiveSection('myjobs');
+    } else if (path === '/my-reviews') {
+      setActiveSection('reviews');
     } else {
       setActiveSection('available');
     }
@@ -129,6 +139,13 @@ const GarageDashboard = () => {
     };
   }, [activeJob, socket, isConnected, currentLocation, getCurrentPosition, retryLocation]);
 
+  // Load reviews when on reviews tab
+  useEffect(() => {
+    if (activeSection === 'reviews') {
+      loadReviews();
+    }
+  }, [activeSection, reviewsPagination.page]);
+
   useEffect(() => {
     loadAvailableJobs();
     loadMyJobs();
@@ -176,6 +193,28 @@ const GarageDashboard = () => {
       setAvailableJobs(response.data.jobs);
     } catch (err) {
       console.error('Failed to load available jobs:', err);
+    }
+  };
+
+  const loadReviews = async () => {
+    setReviewsLoading(true);
+    try {
+      const response = await garage.getMyReviews({ 
+        limit: 20, 
+        page: reviewsPagination.page 
+      });
+      setReviews(response.data.reviews);
+      setRatingDistribution(response.data.ratingDistribution || []);
+      setReviewsPagination(prev => ({
+        ...prev,
+        total: response.data.pagination.total,
+        pages: response.data.pagination.pages
+      }));
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+      setError('Failed to load customer reviews');
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -269,6 +308,25 @@ const GarageDashboard = () => {
     setNewJobAlert(null);
   };
 
+  // Render star rating
+  const renderStars = (rating) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - Math.ceil(rating);
+    
+    return (
+      <div className="flex items-center gap-0.5">
+        {[...Array(fullStars)].map((_, i) => (
+          <FaStar key={`full-${i}`} className="h-3 w-3 text-yellow-500" />
+        ))}
+        {hasHalfStar && <FaStarHalfAlt className="h-3 w-3 text-yellow-500" />}
+        {[...Array(emptyStars)].map((_, i) => (
+          <FaRegStar key={`empty-${i}`} className="h-3 w-3 text-gray-300" />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* New Job Alert */}
@@ -288,7 +346,9 @@ const GarageDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'available' ? '🚨 Emergency Rescue Requests' : '📋 My Assigned Jobs'}
+                {activeSection === 'available' && ' Emergency Rescue Requests'}
+                {activeSection === 'myjobs' && ' My Assigned Jobs'}
+                {activeSection === 'reviews' && ' Customer Reviews'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
@@ -408,6 +468,41 @@ const GarageDashboard = () => {
           </div>
         )}
 
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
+          <button
+            onClick={() => setActiveSection('available')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
+              activeSection === 'available'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+             Available Jobs ({availableJobs.length})
+            {newJobAlert && <span className="ml-2 w-2 h-2 bg-red-500 rounded-full inline-block animate-pulse"></span>}
+          </button>
+          <button
+            onClick={() => setActiveSection('myjobs')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap ${
+              activeSection === 'myjobs'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+             My Jobs ({myJobs.length})
+          </button>
+          <button
+            onClick={() => setActiveSection('reviews')}
+            className={`px-6 py-3 font-medium rounded-t-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeSection === 'reviews'
+                ? 'text-red-600 border-b-2 border-red-600 bg-white'
+                : 'text-gray-600 hover:text-red-600 hover:border-b-2 hover:border-red-300'
+            }`}
+          >
+            <MdRateReview className="h-4 w-4" /> My Reviews ({reviewsPagination.total})
+          </button>
+        </div>
+
         {/* Available Jobs Section */}
         {activeSection === 'available' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
@@ -464,6 +559,140 @@ const GarageDashboard = () => {
                     isLoading={isLoading}
                   />
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* My Reviews Section */}
+        {activeSection === 'reviews' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <FaStar className="h-5 w-5 text-yellow-500" /> Customer Reviews
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  See what customers are saying about your service
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl font-bold text-gray-900">{garageProfile?.rating || 0}</span>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-0.5">
+                      {renderStars(garageProfile?.rating || 0)}
+                    </div>
+                    <span className="text-xs text-gray-500">{reviewsPagination.total} reviews</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Rating Distribution */}
+            {ratingDistribution.length > 0 && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <FaChartBar className="h-4 w-4" /> Rating Distribution
+                </h3>
+                <div className="space-y-2">
+                  {[5, 4, 3, 2, 1].map(star => {
+                    const dist = ratingDistribution.find(d => d._id === star);
+                    const count = dist?.count || 0;
+                    const percentage = reviewsPagination.total > 0 
+                      ? (count / reviewsPagination.total) * 100 
+                      : 0;
+                    return (
+                      <div key={star} className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 w-12">
+                          <span className="text-xs font-medium text-gray-600">{star}</span>
+                          <FaStar className="h-3 w-3 text-yellow-500" />
+                        </div>
+                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-yellow-500 rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <div className="w-12 text-xs text-gray-500">{count}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews List */}
+            {reviewsLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                <p className="mt-2 text-gray-500">Loading reviews...</p>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <MdRateReview className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                <p>No reviews yet</p>
+                <p className="text-sm mt-1">Reviews will appear here once customers rate your service</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div key={review._id} className="border rounded-lg p-4 hover:shadow-md transition-all">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                          <FaUser className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{review.clientId?.fullName || 'Anonymous'}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <FaCalendarAlt className="h-3 w-3" />
+                            <span>{new Date(review.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {renderStars(review.rating)}
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <FaComment className="h-4 w-4 text-gray-400 mt-0.5" />
+                          <p className="text-sm text-gray-600 italic">"{review.comment}"</p>
+                        </div>
+                      </div>
+                    )}
+                    {review.jobId && (
+                      <div className="mt-2 text-xs text-gray-400">
+                        Service: {review.jobId.serviceType?.replace('_', ' ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {reviewsPagination.pages > 1 && (
+              <div className="mt-6 flex justify-center gap-2">
+                <button
+                  onClick={() => setReviewsPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                  disabled={reviewsPagination.page === 1}
+                  className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-1 text-sm text-gray-600">
+                  Page {reviewsPagination.page} of {reviewsPagination.pages}
+                </span>
+                <button
+                  onClick={() => setReviewsPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
+                  disabled={reviewsPagination.page === reviewsPagination.pages}
+                  className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>

@@ -75,10 +75,10 @@ const ClientDashboard = () => {
         setActiveJob(updatedJob);
         
         const statusMessages = {
-          accepted: '✅ Your rescue request has been accepted! A garage is on their way.',
-          en_route: '🚗 The garage is en route to your location!',
-          in_progress: '🔧 The mechanic has arrived and is working on your vehicle.',
-          completed: '🎉 Your rescue is complete! Please rate your experience.'
+          accepted: ' Your rescue request has been accepted! A garage is on their way.',
+          en_route: ' The garage is en route to your location!',
+          in_progress: ' The mechanic has arrived and is working on your vehicle.',
+          completed: ' Your rescue is complete! Please rate your experience.'
         };
         
         if (statusMessages[updatedJob.status]) {
@@ -272,9 +272,9 @@ const ClientDashboard = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {activeSection === 'request' && '🚨 Emergency Rescue Request'}
-              {activeSection === 'history' && '📋 My Rescue History'}
-              {activeSection === 'garages' && '🏪 Nearby Verified Garages'}
+              {activeSection === 'request' && ' Emergency Rescue Request'}
+              {activeSection === 'history' && ' My Rescue History'}
+              {activeSection === 'garages' && ' Nearby Verified Garages'}
             </h1>
             <p className="text-sm text-gray-500">
               {activeSection === 'request' && 'Get immediate roadside assistance'}
