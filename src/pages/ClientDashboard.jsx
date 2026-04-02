@@ -11,6 +11,10 @@ import LocationPicker from '../components/client/LocationPicker';
 import JobCard from '../components/client/JobCard';
 import ReviewModal from '../components/common/ReviewModal';
 import LiveMap from '../components/common/LiveMap';
+import { 
+  FaHourglassHalf, FaCheckCircle, FaCar, FaWrench, FaPartyPopper, FaTimesCircle, 
+  FaClipboardList, FaMapMarkerAlt, FaPhoneAlt, FaStar, FaInfoCircle, FaExclamationTriangle 
+} from 'react-icons/fa';
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -71,10 +75,10 @@ const ClientDashboard = () => {
         setActiveJob(updatedJob);
         
         const statusMessages = {
-          accepted: ' Your rescue request has been accepted! A garage is on their way.',
-          en_route: ' The garage is en route to your location!',
-          in_progress: ' The mechanic has arrived and is working on your vehicle.',
-          completed: ' Your rescue is complete! Please rate your experience.'
+          accepted: '✅ Your rescue request has been accepted! A garage is on their way.',
+          en_route: '🚗 The garage is en route to your location!',
+          in_progress: '🔧 The mechanic has arrived and is working on your vehicle.',
+          completed: '🎉 Your rescue is complete! Please rate your experience.'
         };
         
         if (statusMessages[updatedJob.status]) {
@@ -151,14 +155,14 @@ const ClientDashboard = () => {
 
   const getStatusIcon = (status) => {
     const icons = {
-      pending: '⏳',
-      accepted: '✅',
-      en_route: '🚗',
-      in_progress: '🔧',
-      completed: '🎉',
-      cancelled: '❌'
+      pending: <FaHourglassHalf className="text-4xl" />,
+      accepted: <FaCheckCircle className="text-4xl text-green-500" />,
+      en_route: <FaCar className="text-4xl text-blue-500" />,
+      in_progress: <FaWrench className="text-4xl text-orange-500" />,
+      completed: <FaPartyPopper className="text-4xl text-green-500" />,
+      cancelled: <FaTimesCircle className="text-4xl text-red-500" />
     };
-    return icons[status] || '📋';
+    return icons[status] || <FaClipboardList className="text-4xl" />;
   };
 
   const getStatusText = (status) => {
@@ -191,9 +195,7 @@ const ClientDashboard = () => {
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="animate-pulse">
-                  <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <FaExclamationTriangle className="h-8 w-8" />
                 </div>
                 <div>
                   <p className="text-lg font-bold">Emergency Rescue in Progress</p>
@@ -224,7 +226,7 @@ const ClientDashboard = () => {
               </div>
               {garageLocation && (
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full animate-pulse">
-                   Vehicle en route
+                  <FaCar className="inline mr-1 h-3 w-3" /> Vehicle en route
                 </span>
               )}
             </div>
@@ -240,9 +242,7 @@ const ClientDashboard = () => {
             {etaInfo && garageLocation && (
               <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-blue-800">
-                  <svg className="h-5 w-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <FaInfoCircle className="h-5 w-5 animate-pulse" />
                   <span>
                     Garage is <strong>{etaInfo.distance} km</strong> away - 
                     Estimated arrival in <strong>{etaInfo.duration} minutes</strong>
@@ -257,9 +257,7 @@ const ClientDashboard = () => {
             {!garageLocation && activeJob.status === 'accepted' && (
               <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-yellow-800">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <FaCar className="h-5 w-5" />
                   <span>Garage has accepted your request and will start moving shortly</span>
                 </div>
               </div>
@@ -274,9 +272,9 @@ const ClientDashboard = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {activeSection === 'request' && ' Emergency Rescue Request'}
-              {activeSection === 'history' && ' My Rescue History'}
-              {activeSection === 'garages' && ' Nearby Verified Garages'}
+              {activeSection === 'request' && '🚨 Emergency Rescue Request'}
+              {activeSection === 'history' && '📋 My Rescue History'}
+              {activeSection === 'garages' && '🏪 Nearby Verified Garages'}
             </h1>
             <p className="text-sm text-gray-500">
               {activeSection === 'request' && 'Get immediate roadside assistance'}
@@ -312,7 +310,7 @@ const ClientDashboard = () => {
             
             {activeJob && activeJob.status !== 'completed' ? (
               <div className="text-center py-8">
-                <div className="text-6xl mb-4 animate-pulse">{getStatusIcon(activeJob.status)}</div>
+                <div className="mb-4">{getStatusIcon(activeJob.status)}</div>
                 <h3 className="text-lg font-semibold text-gray-900">Active Rescue Request</h3>
                 <p className="text-gray-600 mt-2">
                   Status: <span className={`font-medium ${activeJob.status === 'pending' ? 'text-yellow-600' : 'text-red-600'}`}>
@@ -381,7 +379,7 @@ const ClientDashboard = () => {
             )}
 
             <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-100">
-              <h3 className="font-medium text-red-800 mb-2"> Emergency Tips</h3>
+              <h3 className="font-medium text-red-800 mb-2"><FaExclamationTriangle className="inline mr-1" /> Emergency Tips</h3>
               <ul className="text-sm text-red-700 space-y-1">
                 <li>• Stay in a safe location away from traffic</li>
                 <li>• Turn on your hazard lights</li>
@@ -446,8 +444,8 @@ const ClientDashboard = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{garage.address}</p>
-                        <p className="text-sm text-gray-600">📞 {garage.businessPhone}</p>
+                        <p className="text-sm text-gray-600 mt-1"><FaMapMarkerAlt className="inline mr-1 h-3 w-3" /> {garage.address}</p>
+                        <p className="text-sm text-gray-600"><FaPhoneAlt className="inline mr-1 h-3 w-3" /> {garage.businessPhone}</p>
                         <div className="flex gap-2 mt-2">
                           {garage.services?.slice(0, 3).map((service, idx) => (
                             <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
@@ -458,7 +456,7 @@ const ClientDashboard = () => {
                       </div>
                       <div className="text-right">
                         <div className="flex items-center gap-1">
-                          <span className="text-yellow-500">★</span>
+                          <FaStar className="h-4 w-4 text-yellow-500" />
                           <span className="font-medium">{garage.rating || 'New'}</span>
                         </div>
                         <p className="text-xs text-gray-500">{garage.totalReviews || 0} reviews</p>
