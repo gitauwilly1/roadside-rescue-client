@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signOutGoogle } from '../config/firebase';
+import { FaGoogle, FaTimes, FaLock } from 'react-icons/fa';
 
 const RegisterPage = () => {
   const location = useLocation();
@@ -155,15 +156,13 @@ const RegisterPage = () => {
           {/* Google Sign-Up Banner */}
           {isGoogleUser && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
-              <svg className="h-3 w-3" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              </svg>
+              <FaGoogle className="h-3 w-3" />
               <span>Signing up with Google</span>
               <button
                 onClick={handleSkipGoogleSignUp}
                 className="ml-2 text-blue-500 hover:text-blue-700"
               >
-                ×
+                <FaTimes className="h-3 w-3" />
               </button>
             </div>
           )}
@@ -306,9 +305,12 @@ const RegisterPage = () => {
 
             {isGoogleUser && (
               <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  You're signing up with Google. You'll be able to set a password later from your profile settings.
-                </p>
+                <div className="flex items-center gap-2">
+                  <FaLock className="h-4 w-4 text-blue-600" />
+                  <p className="text-xs text-blue-700">
+                    You're signing up with Google. You'll be able to set a password later from your profile settings.
+                  </p>
+                </div>
               </div>
             )}
           </div>
