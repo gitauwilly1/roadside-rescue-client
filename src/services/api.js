@@ -105,6 +105,9 @@ export const garage = {
   getAvailableJobs: (params) => api.get('/garage/jobs/available', { params }),
   getJob: (jobId) => api.get(`/garage/jobs/${jobId}`),
   updateJobStatus: (jobId, status) => api.patch(`/garage/jobs/${jobId}/status`, { status }),
+
+// Reviews
+  getMyReviews: (params) => api.get('/garage/reviews', { params }),
 };
 
 export const admin = {
@@ -126,6 +129,10 @@ export const admin = {
   getFavorites: () => api.get('/admin/favorites'),
   deleteReview: (reviewId) => api.delete(`/admin/reviews/${reviewId}`),
   getNotificationPreferences: () => api.get('/admin/notifications/preferences'),
+  updateNotificationPreferences: (data) => api.put('/admin/notifications/preferences', data),
+
+  // Reviews
+  getReviews: (params) => api.get('/admin/reviews', { params }),
 };
 
 export default api;
