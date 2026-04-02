@@ -571,7 +571,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Vehicles Section with Delete */}
+                {/* Vehicles Section with Delete */}
         {activeSection === 'vehicles' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -611,7 +611,7 @@ const AdminDashboard = () => {
                           <FaTrash className="h-3 w-3" /> Delete
                         </button>
                       </td>
-                    </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
