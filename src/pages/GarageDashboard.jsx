@@ -281,7 +281,7 @@ const GarageDashboard = () => {
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold">
-                {activeSection === 'available' ? ' Emergency Rescue Requests' : '📋 My Assigned Jobs'}
+                {activeSection === 'available' ? ' Emergency Rescue Requests' : ' My Assigned Jobs'}
               </h1>
               <p className="text-sm text-red-100">Welcome, {garageProfile?.businessName || user?.fullName}</p>
             </div>
